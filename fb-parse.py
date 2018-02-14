@@ -5,7 +5,7 @@ from tqdm import tqdm
 
 
 
-def process(file):
+def parse_file(f):
     '''
     do your file processing here
     '''
@@ -41,14 +41,21 @@ def process(file):
         print(user[size-1-i], '\t', message[size-1-i],'\t', date[size-1-i])
     return 0
 
-def recursion(path):
-    output = []
-    for file in os.listdir(path):
-        if os.path.isdir(file):
-            output += recursion(file)
-        else:
-            output.append(process(file))
+def find_html_filenames( path_to_dir, suffix=".html" ):
+    filenames = os.listdir(path_to_dir)
+    return [ filename for filename in filenames if filename.endswith( suffix ) ]
 
-    return output
+def parse_folder():
+    os.chdir("facebook/messages")
+    print(os.getcwd())
+    files = find_html_filenames(os.getcwd())
 
-process('')
+    for f in tqdm(files):
+        parse_file(f)
+        print()
+
+
+parse_folder()
+# parse_file("facebook/messages/356.html") #has no user but has names
+# parse_file("facebook/messages/421.html") #has no name but has messages
+# parse_file("facebook/messages/7.html") #group chat
