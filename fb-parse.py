@@ -3,43 +3,67 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from tqdm import tqdm
 
-
+"""Fields we care about"""
+#Title
+#People
+#Times
+#Dates
+#Messages
+#User
 
 def parse_file(f):
-    '''
-    do your file processing here
-    '''
-    print("...started")
-    soup = BeautifulSoup(open("facebook/messages/563.html", encoding='utf8').read(), 'html.parser')
-    # soup = BeautifulSoup(open("facebook/messages/635.html", encoding='utf8').read(), 'html.parser')
-    print("Opened messages.htm")
+    print(f, "Opening HTML File(this may take a while)")
+    soup = BeautifulSoup(open(f, encoding='utf8').read(), 'html.parser')
+    try:
+        people = soup.find("h3").next_sibling.split(":")[1].split(',') #people in conversation
+    except:
+        print("No people?")
+        return #there are no people ???? (happens when someone deletes their account maybe?)
+    
+    # print("Ppl", people)
+
+    title = soup.find("title").contents[0][18:] #name of conversation
+    print("TITLE", title)
+
+    # print("Opened messages.htm")
     soup = soup.find_all("div", class_="message")
 
-    group = []
-    time = []
-    date = []
+    group = False
+    if len(people) > 1:
+        group = True
+
+    times = []
+    dates = []
     message = []
     user = []
 
     for msg in tqdm(soup):
-        date.append(msg.find_all("span", class_="meta")[0].contents[0])
-        user.append(msg.find_all("span", class_="user")[0].contents[0])
+        (date, time) = msg.find_all("span", class_="meta")[0].contents[0].split(" at ")
+
+        usr = msg.find_all("span", class_="user")[0].contents[0]
+        usr = people[0][1:]
+
         try:
             text = msg.find_next_sibling("p").contents[0]
         except:
             text = ""
+            #Not sure what to do here
+
+        dates.append(date)
+        times.append(time)
         message.append(text)
+        user.append(usr)
 
 
     """OUTPUT"""
-    print(len(date))
-    print(len(user))
-    print(len(message))
+    # print(len(dates))
+    # print(len(user))
+    # print(len(message))
+    num_messages = len(dates) #number of messages
 
-    size = len(date)
-    for i in range(size):
-        print(user[size-1-i], '\t', message[size-1-i],'\t', date[size-1-i])
-    return 0
+    """Output all messages in order"""
+    # for i in range(num_messages):
+    #     print(user[num_messages-1-i], '\t', message[num_messages-1-i],'\t', dates[num_messages-1-i])
 
 def find_html_filenames( path_to_dir, suffix=".html" ):
     filenames = os.listdir(path_to_dir)
