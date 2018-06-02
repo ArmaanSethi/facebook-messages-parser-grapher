@@ -13,7 +13,7 @@ import pickle as pkl
 #gender
 
 def parse_file(f):
-    print(f, "\nOpening HTML File(this may take a while)")
+    print(f, "Opening HTML File(this may take a while)")
     soup = BeautifulSoup(open(f, encoding='utf8').read(), 'html.parser')
 
     title = soup.find("title").contents[0]
@@ -91,7 +91,7 @@ def parse_file(f):
     print(len(times), times[-1])
     print(len(texts), texts[-1])
     print(len(user), user[-1])
-    return(f, str(title), people_count, dates, times, texts, user)
+    return(f[:-13],str(title), people_count, dates, times, texts, user)
 
 root = "facebook/messages"
 os.chdir(root)
