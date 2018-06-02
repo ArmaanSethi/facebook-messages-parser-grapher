@@ -3,25 +3,28 @@ import sqlite3
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from tqdm import tqdm
+import pickle as pkl
+
 
 #Things I ignore
 #Reactions, ownloaded files, Audio files, Plans
 
 #Things to do
-#Fix People
 #Db
+#gender
+
 
 def parse_file(f):
     print(f, "Opening HTML File(this may take a while)")
     soup = BeautifulSoup(open(f, encoding='utf8').read(), 'html.parser')
 
+    title = soup.find("title").contents[0]
     main = soup.find("div", {"role": "main"})
     children = main.findChildren(recursive = False)
 
-
     gc = children[0].find("div", {"class": "_2lek"})
     #print(gc.contents[0])
-    people = []
+    people = [] #dictonary of person:num messages
     group = False
     if (gc.contents[0][0:14] == "Participants: "):
         #Group Chat
@@ -34,7 +37,7 @@ def parse_file(f):
 
     print("People: ", people)
 
-
+    people_count = {}
     times = []
     dates = []
     texts = []
@@ -52,7 +55,11 @@ def parse_file(f):
             print("DATE FAIL", children[i])
             continue
 
-        usr = children[i].find_all("div", class_= "_2lel")[0].contents[0]
+        usr = str(children[i].find_all("div", class_= "_2lel")[0].contents[0])
+        if usr in people_count:
+            people_count[usr] += 1
+        else:
+            people_count[usr] = 1
         # print("usr: ", usr)
 
         things = children[i].find_all("div", class_= "_2let")[0].contents[0].find_all("div")
@@ -67,23 +74,27 @@ def parse_file(f):
         except Exception:
             img = ""
 
-        if text == img == "":
-            print("NO TEXT, NO IMAGE: ", i)
-            print(things)
-            # input()
+        # if text == img == "":
+        #     print("NO TEXT, NO IMAGE: ", i)
+        #     print(things)
+        #     input()
 
 
         dt = date_time.split(" ")
-        dates.append(" ".join(dt[0:-1]))
-        times.append(dt[-1])
-        texts.append(text)
-        images.append(img)
-        user.append(usr)
 
-    # print(len(dates), dates[-1])
-    # print(len(times), times[-1])
-    # print(len(texts), texts[-1])
-    # print(len(user), user[-1])
+        dates.append(" ".join(dt[0:-1]))
+        times.append(str(dt[-1]))
+        texts.append(str(text))
+        images.append(str(img))
+        user.append(str(usr))
+
+
+    print(len(dates), dates[-1])
+    print(len(times), times[-1])
+    print(len(texts), texts[-1])
+    print(len(user), user[-1])
+    return(str(title), people_count, dates, times, texts, user)
+
 
         
 
@@ -94,8 +105,20 @@ os.chdir(root)
 files = os.listdir()
 
 print("START")
+fails = []
+success = []
+#ID, people{name:numMessages}, [dates, times, users, images]
 for f in tqdm(files):
-    if(not f.startswith('.')):
-        print('\n\n\n\n')
+    try:
         filename = os.path.join(f, "message.html")
-        parse_file(filename)
+        success.append(parse_file(filename))
+    except Exception:
+        fails.append(f)
+    print('\n')
+
+# os.chdir("..")
+# os.chdir("..")
+
+# print(success)
+pkl.dump(success, open("../../messages.pkl", "wb"))
+pkl.dump(fails, open("../../fails.pkl", "wb"))
