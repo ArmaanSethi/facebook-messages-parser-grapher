@@ -1,8 +1,8 @@
-# Facebook Parser
+# Facebook Parser/Grapher
 Parse all of your facebook messages
 Updated June 2nd, 2018.
 
-## Installation
+## Setup
 1. Clone this repository
 2. Go to your Facebook settings and select "Download a copy of your Facebook data" (should be under General Account Settings)
 3. Place the unzipped download of your Facebook data into the same folder as this repository
