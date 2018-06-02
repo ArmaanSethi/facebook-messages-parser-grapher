@@ -5,14 +5,12 @@ from datetime import datetime, timedelta
 from tqdm import tqdm
 import pickle as pkl
 
-
 #Things I ignore
 #Reactions, ownloaded files, Audio files, Plans
 
 #Things to do
 #Db
 #gender
-
 
 def parse_file(f):
     print(f, "Opening HTML File(this may take a while)")
@@ -35,7 +33,7 @@ def parse_file(f):
         #Not Group Chat
         people.append(soup.find("title").contents[0])
 
-    print("People: ", people)
+    # print("People: ", people)
 
     people_count = {}
     times = []
@@ -88,18 +86,13 @@ def parse_file(f):
         images.append(str(img))
         user.append(str(usr))
 
-
+    print(people_count)
     print(len(dates), dates[-1])
     print(len(times), times[-1])
     print(len(texts), texts[-1])
     print(len(user), user[-1])
     return(str(title), people_count, dates, times, texts, user)
 
-
-        
-
-
-print("\n\n\n\n\n")
 root = "facebook/messages"
 os.chdir(root)
 files = os.listdir()
@@ -116,9 +109,5 @@ for f in tqdm(files):
         fails.append(f)
     print('\n')
 
-# os.chdir("..")
-# os.chdir("..")
-
-# print(success)
 pkl.dump(success, open("../../messages.pkl", "wb"))
 pkl.dump(fails, open("../../fails.pkl", "wb"))
