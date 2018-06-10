@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
+from datetime import datetime, date, time, timedelta
 from tqdm import tqdm
 import pickle as pkl
 
@@ -11,6 +11,34 @@ import pickle as pkl
 #Things to do
 #Db
 #gender
+def fb_to_datetime(date_time):
+# Jan 30, 2016 6:13am
+# Jan 30, 2016 6:13am
+# Jan 29, 2016 11:56pm
+    months={"Jan":1,"Feb":2,"Mar":3,"Apr":4,"May":5,"Jun":6,"Jul":7,"Aug":8,"Sep":9,"Oct":10,"Nov":11,"Dec":12}
+    
+    dt = date_time.split(" ")
+    date_str = " ".join(dt[0:-1])
+    time_str = str(dt[-1])
+
+    year=date_str[8:]
+    month=months[date_str[0:3]]
+    day=date_str[4:6]
+
+    time_components=time_str.split(":")
+    hour=int(time_components[0])
+    if(hour == 12):
+        hour = 0
+    if(time_components[1][-2] == 'p'):
+        hour+=12
+    minute=time_components[1][:2]
+    second=0
+
+    d = date(int(year), int(month), int(day))
+    t = time(int(hour), int(minute), int(second))
+    dt = datetime.combine(d,t)
+
+    return dt
 
 def parse_file(f):
     print(f, "Opening HTML File(this may take a while)")
@@ -77,21 +105,18 @@ def parse_file(f):
         #     print(things)
         #     input()
 
+        # print( fb_to_datetime(date_time) )
+        
+        date_time = fb_to_datetime(date_time)
 
-        dt = date_time.split(" ")
-
-        dates.append(" ".join(dt[0:-1]))
-        times.append(str(dt[-1]))
         texts.append(str(text))
         images.append(str(img))
         user.append(str(usr))
 
     print(people_count)
-    print(len(dates), dates[-1])
-    print(len(times), times[-1])
     print(len(texts), texts[-1])
     print(len(user), user[-1])
-    return(f[:-13],str(title), people_count, dates, times, texts, user)
+    return(f[:-13],str(title), people_count, date_time, texts, user, group)
 
 root = "facebook/messages"
 os.chdir(root)
