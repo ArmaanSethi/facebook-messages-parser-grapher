@@ -1,3 +1,10 @@
 
 facebook/
+facebook_old/
+
+.ipynb_checkpoints/
+.vscode/
+
 .DS_Store
+
+*.pkl

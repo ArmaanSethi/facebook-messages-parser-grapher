@@ -12,9 +12,6 @@ import pickle as pkl
 #Db
 #gender
 def fb_to_datetime(date_time):
-# Jan 30, 2016 6:13am
-# Jan 30, 2016 6:13am
-# Jan 29, 2016 11:56pm
     months={"Jan":1,"Feb":2,"Mar":3,"Apr":4,"May":5,"Jun":6,"Jul":7,"Aug":8,"Sep":9,"Oct":10,"Nov":11,"Dec":12}
     
     dt = date_time.split(" ")
