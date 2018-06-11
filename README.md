@@ -9,7 +9,7 @@ Updated June 2nd, 2018.
 
 ## Usage
 1. run parser.py
-2. run analyze.py
+2. Open analyze.ipyng as a Jupyter Notebook
 3. hope it works
 
 ## Contributing
