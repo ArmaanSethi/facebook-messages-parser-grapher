@@ -1,9 +1,14 @@
 import os
 import sqlite3
 from bs4 import BeautifulSoup
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, timedelta
 from tqdm import tqdm
 import pickle as pkl
+import pandas as pd
+import numpy as np
+from matplotlib import pyplot as plt
+
+from userinfo import YOUR_NAME, START_DAY, END_DAY
 
 #Things I ignore
 #Reactions, ownloaded files, Audio files, Plans
