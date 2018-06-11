@@ -17,8 +17,10 @@ Updated June 2nd, 2018.
 4. Rename the unzipped folder to "facebook"  
 
 ## Usage
-1. run parser.py
-2. Open analyze.ipyng as a Jupyter Notebook 
+1. Install requirements  
+  'pip install -r requirements.txt'
+2. run parser.py  
+3. Open analyze.ipyng as a Jupyter Notebook 
 3. Hope it works
 
 ## Contributing
