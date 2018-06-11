@@ -1,5 +1,5 @@
 # Facebook Parser/Grapher
-Parse all of your facebook messages
+Parse all of your facebook messages using __**Python 3**__  
 Updated June 2nd, 2018.
 
 ## Setup
