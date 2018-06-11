@@ -61,8 +61,7 @@ def parse_file(f):
     # print("People: ", people)
 
     people_count = {}
-    times = []
-    dates = []
+    date_times = []
     texts = []
     images = []
     user = []
@@ -104,8 +103,8 @@ def parse_file(f):
 
         # print( fb_to_datetime(date_time) )
         
-        date_time = fb_to_datetime(date_time)
 
+        date_times.append(fb_to_datetime(date_time))
         texts.append(str(text))
         images.append(str(img))
         user.append(str(usr))
@@ -113,7 +112,7 @@ def parse_file(f):
     print(people_count)
     print(len(texts), texts[-1])
     print(len(user), user[-1])
-    return(f[:-13],str(title), people_count, date_time, texts, user, group)
+    return(f[:-13],str(title), people_count, date_times, texts, user, group)
 
 root = "facebook/messages"
 os.chdir(root)
