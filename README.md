@@ -9,7 +9,8 @@ Updated June 2nd, 2018.
 
 ## Usage
 1. run parser.py
-2. hope it works
+2. run analyze.py
+3. hope it works
 
 ## Contributing
 1. Fork it!
