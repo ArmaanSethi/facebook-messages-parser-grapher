@@ -30,9 +30,10 @@ Remember, Python3 only.
   `pip install -r requirements.txt`
 2. run the correct parser for the formatting you chose  
   `python html_parse.py` or `python json_parse.py`
-3. Open analyze.ipyng as a Jupyter Notebook 
-4. Run all the individual cells (it's somewhat interactive)
-5. Graphs will be saved in the 'graphs' folder
+3. Update userinfo.py with your info
+4. Open analyze.ipyng as a Jupyter Notebook 
+5. Run all the individual cells (it's somewhat interactive)
+6. Graphs will be saved in the 'graphs' folder
 
 ## Contributing
 1. Fork it!
