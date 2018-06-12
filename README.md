@@ -17,8 +17,9 @@ Updated June 2nd, 2018.
   b. Click the down arrow beside the question mark button  
   c. Click "Settings"  
   d. From the left sidebar click "Your Facebook Information"  
-  e. Click "Download Your Information"  
-  f. Make sure the formatting is "HTML" or "Json" - Remember which format you choose.  
+  e. Click "Download Your Information"(all data, high quality)  
+  f. Make sure the formatting is "JSON" or "HTML" - Remember which format you choose.  
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Json" is __a lot__ faster than "HTML"  
   g. Download all of your Facebook data  
   
 3. Place the unzipped download of your Facebook data into the same folder as this repository.  
