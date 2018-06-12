@@ -18,7 +18,7 @@ Updated June 2nd, 2018.
   c. Click "Settings"  
   d. From the left sidebar click "Your Facebook Information"  
   e. Click "Download Your Information"  
-  f. Make sure the formatting is "HTML" (maybe I'll do JSON formatting one day...)  
+  f. Make sure the formatting is "HTML" or "Json" - Remember which format you choose.  
   g. Download all of your Facebook data  
   
 3. Place the unzipped download of your Facebook data into the same folder as this repository.  
@@ -28,9 +28,11 @@ Updated June 2nd, 2018.
 Remember, Python3 only.  
 1. Install requirements  
   `pip install -r requirements.txt`
-2. run parser.py  
+2. run the correct parser for the formatting you chose  
+  `python html_parse.py` or `python json_parse.py`
 3. Open analyze.ipyng as a Jupyter Notebook 
-3. Hope it works
+4. Run all the individual cells (it's somewhat interactive)
+5. Graphs will be saved in the 'graphs' folder
 
 ## Contributing
 1. Fork it!
