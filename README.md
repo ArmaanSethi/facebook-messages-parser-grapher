@@ -2,6 +2,14 @@
 ### Parse all of your facebook messages using _**Python3**_  
 Updated June 2nd, 2018.
 
+## Example Graphs 
+<span><img src="graphs/cumulative_messaging_by_day.png" width="375">
+<img src="graphs/total_sent_received.png" width="475">
+</span>
+<img src="graphs/num_people_talked_per_day.png" width="425">
+<img src="graphs/total_messages_per_day.png" width="425">
+
+
 ## Setup
 1. Clone this repository
 2. Go to your Facebook settings and select "Download a copy of your Facebook data" (should be under General Account Settings)  
