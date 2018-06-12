@@ -27,13 +27,15 @@ Updated June 2nd, 2018.
 ## Usage
 Remember, Python3 only.  
 1. Install requirements  
-  `pip install -r requirements.txt`
+      `pip install -r requirements.txt`
 2. run the correct parser for the formatting you chose  
-  `python html_parse.py` or `python json_parse.py`
-3. Update userinfo.py with your info
-4. Open analyze.ipyng as a Jupyter Notebook 
-5. Run all the individual cells (it's somewhat interactive)
-6. Graphs will be saved in the 'graphs' folder
+      `python html_parse.py` or `python json_parse.py`
+3. If you have Jupyter open analyze.ipynb  and __skip step 4__  
+  a. Run all the individual cells (This can easily be done by clicking "Cell" --> "Run All")  
+  b. Graphs are somewhat interactive - you can zoom in and stuff  
+4. run analyze.py  
+      `python analyze.py`  
+5. Graphs will be saved in the 'graphs' folder
 
 ## Contributing
 1. Fork it!
