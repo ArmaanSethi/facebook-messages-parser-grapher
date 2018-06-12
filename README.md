@@ -1,5 +1,5 @@
 # Facebook Parser/Grapher
-### Parse all of your facebook messages using _**Python 3**_  
+### Parse all of your facebook messages using _**Python3**_  
 Updated June 2nd, 2018.
 
 ## Setup
@@ -17,6 +17,7 @@ Updated June 2nd, 2018.
 4. Rename the unzipped folder to "facebook"  
 
 ## Usage
+Remember, Python3 only.  
 1. Install requirements  
   `pip install -r requirements.txt`
 2. run parser.py  
