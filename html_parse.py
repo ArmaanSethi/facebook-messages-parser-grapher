@@ -1,7 +1,7 @@
 import os
 import sqlite3
 from bs4 import BeautifulSoup
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date, time
 from tqdm import tqdm
 import pickle as pkl
 import pandas as pd
@@ -132,6 +132,7 @@ for f in tqdm(files):
         filename = os.path.join(f, "message.html")
         success.append(parse_file(filename))
     except Exception:
+        print("Failed to parse", root+"/"+filename)
         fails.append(f)
     print('\n')
 

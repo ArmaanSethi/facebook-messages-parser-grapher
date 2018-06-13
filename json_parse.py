@@ -89,6 +89,7 @@ for f in tqdm(files):
         # print(f)
         success.append(parse_file(filename))
     except Exception:
+        print("Failed to parse", root+"/"+filename)
         fails.append(f)
     print('\n')
 
