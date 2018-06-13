@@ -28,15 +28,16 @@ Updated June 2nd, 2018.
 ## Usage
 Remember, Python3 only.  
 1. Install requirements  
-      `pip install -r requirements.txt`
-2. run the correct parser for the formatting you chose  
+      `pip install -r requirements.txt`  
+2. update userinfo.py with your correct information  
+3. run the correct parser for the formatting you chose  
       `python html_parse.py` or `python json_parse.py`
-3. If you have Jupyter open analyze.ipynb  and __skip step 4__  
+4. If you have Jupyter open analyze.ipynb  and __skip step 5__  
   a. Run all the individual cells (This can easily be done by clicking "Cell" --> "Run All")  
   b. Graphs are somewhat interactive - you can zoom in and stuff  
-4. run analyze.py  
+5. run analyze.py  
       `python analyze.py`  
-5. Graphs will be saved in the 'graphs' folder
+6. Graphs will be saved in the 'graphs' folder
 
 ## Contributing
 1. Fork it!
