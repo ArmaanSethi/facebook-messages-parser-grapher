@@ -83,8 +83,8 @@ for f in tqdm(files):
     if(f != ".DS_Store" and f != "stickers_used"): # ignore other generic files
         filename = os.path.join(f, "message.json")
         success.append(parse_file(filename))
-    except Exception:
-        print("Failed to parse", root+"/"+filename)
+    except Exception as e:
+        print("Failed to parse. Exception: ", repr(e), " ", root, "/", filename)
         fails.append(f)
 
 pkl.dump(success, open("../../messages.pkl", "wb"))
