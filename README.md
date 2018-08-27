@@ -27,17 +27,19 @@ Updated June 2nd, 2018.
 
 ## Usage
 Remember, Python3 only.  
-1. Install requirements  
-      `pip install -r requirements.txt`  
-2. update userinfo.py with your correct information  
-3. run the correct parser for the formatting you chose  
-      `python html_parse.py` or `python json_parse.py`
-4. If you have Jupyter open analyze.ipynb  and __skip step 5__  
-  a. Run all the individual cells (This can easily be done by clicking "Cell" --> "Run All")  
-  b. Graphs are somewhat interactive - you can zoom in and stuff  
-5. run analyze.py  
-      `python analyze.py`  
-6. Graphs will be saved in the 'graphs' folder
+1. Install requirements
+```pip install -r requirements.txt``` 
+1. update userinfo.py with your correct information  
+1. run the correct parser for the formatting you chose 
+```python html_parse.py``` or ```python json_parse.py```
+1. If you have Jupyter 
+    1. open analyze.ipynb 
+    1. Run all the individual cells (This can easily be done by clicking "Cell" --> "Run All")  
+    1. Graphs are somewhat interactive - you can zoom in and stuff  
+1. You don't have Jupyter
+    1. run analyze.py with your name, start and end date as arguments (checkout the help with `python analyze.py -h`)
+    ```python analyze.py -n "Your Facebook name" -s "MM/DD/YY" -e "MM/DD/YY"```
+    1. Graphs will be saved in the 'graphs' folder
 
 ## Contributing
 1. Fork it!
