@@ -32,7 +32,7 @@ def parse_file(f):
         if( 'participants' not in data):#Talking to a bot
             group = True #I geuss treat as group chat
         else:
-            if(len(data['participants']) == 1):
+            if(len(data['participants']) <= 2):
                 group = False
 
         people_count = {}
@@ -55,7 +55,6 @@ def parse_file(f):
 
             if(not 'content' in msg): #no text
                 texts.append("")
-                # print(msg)
             else:
                 texts.append(msg['content'])
 
@@ -64,8 +63,12 @@ def parse_file(f):
             else:
                 images.append(msg['photos'])
 
+            if(not 'timestamp_ms' in msg):
+                timestamp = int(msg['timestamp'])
+            else:
+                timestamp = int(int(msg['timestamp_ms'])/1000)
 
-            date_times.append(datetime.fromtimestamp(int(msg['timestamp'])))
+            date_times.append(datetime.fromtimestamp(timestamp))
             user.append(usr)
 
     # print(date_times)
