@@ -45,3 +45,11 @@ Remember, Python3 only.
 3. Commit your changes: `git commit -am 'Add some feature'`
 4. Push to the branch: `git push origin my-new-feature`
 5. Submit a pull request :D
+
+## Additional Features Being Worked On
+1. Creating a chat bot from your own facebook data. <br>
+    - I have created a way to export the messages so you can train it using: <br>
+  https://github.com/ArmaanSethi/facebook-messages-chatbot
+  
+2. Creating a way to measure average reply time <br>
+    - I have no idea how I would create this metric, all help is welcome.
