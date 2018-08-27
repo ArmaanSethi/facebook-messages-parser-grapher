@@ -26,8 +26,8 @@ Updated June 2nd, 2018.
 4. Rename the unzipped folder to "facebook"  
 
 ## Usage
-This project is for Python3  
-1. Install requirements (you might need to use `pip3` and `python3` commands)
+Remember, Python3 only.  
+1. Install requirements
 ```pip install -r requirements.txt``` 
 1. update userinfo.py with your correct information  
 1. run the correct parser for the formatting you chose 
