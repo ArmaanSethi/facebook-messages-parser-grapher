@@ -10,18 +10,14 @@ from matplotlib import pyplot as plt
 
 from userinfo import YOUR_NAME, START_DAY, END_DAY
 
-#Things I ignore
-#Reactions, ownloaded files, Audio files, Plans
-
-#Things to do
-#Db
-#gender
+# Things that are ignored
+# Reactions, downloaded files, Audio files, Plans
 
 def parse_file(f):
     with open(f) as json_file:
         data = json.load(json_file)
 
-        if('title' not in data):#No title, seems to be when someone deletes their account
+        if('title' not in data): # No title, seems to be when someone deletes their account
             title = data['thread_path']
         else:
             title = data['title']
@@ -29,8 +25,8 @@ def parse_file(f):
         id = data['thread_path']
 
         group = True
-        if( 'participants' not in data):#Talking to a bot
-            group = True #I geuss treat as group chat
+        if( 'participants' not in data): # Talking to a bot
+            group = True # I guess treat as group chat
         else:
             if(len(data['participants']) <= 2):
                 group = False
@@ -42,8 +38,7 @@ def parse_file(f):
         user = []
 
         for msg in data['messages']:
-            # print(msg)
-            if(not 'sender_name' in msg): #User Left Group or User Deleted Account
+            if(not 'sender_name' in msg): # User left the group or User Deleted Account
                 usr = "NO SENDER NAME"
             else:
                 usr = msg['sender_name']
@@ -58,7 +53,7 @@ def parse_file(f):
             else:
                 texts.append(msg['content'])
 
-            if(not 'photos' in msg):#no photo url...there still can be sticker url
+            if(not 'photos' in msg): #no photo url...there still can be sticker url
                 images.append("")
             else:
                 images.append(msg['photos'])
@@ -89,7 +84,6 @@ for f in tqdm(files):
     try:
     # if(f != ".DS_Store" and f != "stickers_used"): #only times I ran into errors
         filename = os.path.join(f, "message.json")
-        # print(f)
         success.append(parse_file(filename))
     except Exception:
         print("Failed to parse", root+"/"+filename)
