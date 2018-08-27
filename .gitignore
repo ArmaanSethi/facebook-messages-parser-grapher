@@ -3,6 +3,7 @@ facebook_json/
 facebook_html/
 facebook_old/
 graphs/
+
 .ipynb_checkpoints/
 .vscode/
 
@@ -10,3 +11,12 @@ graphs/
 
 *.pkl
 __pycache__/userinfo.cpython-36.pyc
+
+graphs/total_sent_received.png
+graphs/num_people_talked_per_day.png
+graphs/cumulative_messaging_by_day.png
+graphs/cumulative_messaging_by_day.png
+graphs/num_people_talked_per_day.png
+graphs/total_sent_received.png
+
+chatbot.txt
