@@ -66,8 +66,6 @@ def parse_file(f):
             date_times.append(datetime.fromtimestamp(timestamp))
             user.append(usr)
 
-    # print(date_times)
-    print(id, title, people_count, len(date_times), len(texts), len(user), group)
     return(id ,str(title), people_count, date_times, texts, user, group)
 
 
@@ -82,13 +80,12 @@ success = []
 
 for f in tqdm(files):
     try:
-    # if(f != ".DS_Store" and f != "stickers_used"): #only times I ran into errors
+    if(f != ".DS_Store" and f != "stickers_used"): # ignore other generic files
         filename = os.path.join(f, "message.json")
         success.append(parse_file(filename))
     except Exception:
         print("Failed to parse", root+"/"+filename)
         fails.append(f)
-    print('\n')
 
 pkl.dump(success, open("../../messages.pkl", "wb"))
 pkl.dump(fails, open("../../fails.pkl", "wb"))
