@@ -3,11 +3,11 @@
 Updated June 2nd, 2018.
 
 ## Example Graphs 
-<span><img src="graphs/cumulative_messaging_by_day.png" width="375">
-<img src="graphs/total_sent_received.png" width="475">
+<span><img src="https://user-images.githubusercontent.com/25948390/44682733-81fade80-aa44-11e8-8339-3a38a5d22f21.png" width="375">
+<img src="https://user-images.githubusercontent.com/25948390/44682734-832c0b80-aa44-11e8-9d80-c9db0602de04.png" width="475">
 </span>
-<img src="graphs/num_people_talked_per_day.png" width="425">
-<img src="graphs/total_messages_per_day.png" width="425">
+<img src="https://user-images.githubusercontent.com/25948390/44682735-83c4a200-aa44-11e8-9ba5-9058bfaf2d56.png" width="425">
+<img src="https://user-images.githubusercontent.com/25948390/44682739-84f5cf00-aa44-11e8-8b5d-1007614d8b2b.png" width="425">
 
 
 ## Setup
