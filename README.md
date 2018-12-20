@@ -1,6 +1,6 @@
 # Facebook Parser/Grapher
 ### Parse all of your facebook messages using _**Python3**_  
-Updated June 2nd, 2018.
+Updated December 20th, 2018.
 
 ## Example Graphs 
 <span><img src="https://user-images.githubusercontent.com/25948390/44682733-81fade80-aa44-11e8-8339-3a38a5d22f21.png" width="375">
@@ -18,8 +18,7 @@ Updated June 2nd, 2018.
   c. Click "Settings"  
   d. From the left sidebar click "Your Facebook Information"  
   e. Click "Download Your Information"(all data, high quality)  
-  f. Make sure the formatting is "JSON" or "HTML" - Remember which format you choose.  
-  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"Json" is __a lot__ faster than "HTML"  
+  f. Make sure the formatting is "JSON"   
   g. Download all of your Facebook data  
   
 3. Place the unzipped download of your Facebook data into the same folder as this repository.  
@@ -31,7 +30,7 @@ Remember, Python3 only.
       `pip install -r requirements.txt`  
 2. update userinfo.py with your correct information  
 3. run the correct parser for the formatting you chose  
-      `python html_parse.py` or `python json_parse.py`
+      `python json_parse.py`
 4. If you have Jupyter open analyze.ipynb  and __skip step 5__  
   a. Run all the individual cells (This can easily be done by clicking "Cell" --> "Run All")  
   b. Graphs are somewhat interactive - you can zoom in and stuff  
