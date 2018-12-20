@@ -68,24 +68,34 @@ def parse_file(f):
 
     return(id ,str(title), people_count, date_times, texts, user, group)
 
+def list_files(paths):
+    files = []
+    root = os.getcwd()
+#     print(root)
+    for path in paths:
+#         print(os.getcwd())
+        os.chdir(path)
+        prefix = os.getcwd()
+        f = os.listdir()
+        files.extend(list(map(lambda x: prefix+"/"+x, f)))
+        os.chdir(root)
+        
+    return files
 
-root = "facebook/messages"
-os.chdir(root)
-files = os.listdir()
-
-print("START")
+paths = ["facebook/messages/archived_threads", "facebook/messages/inbox"]
+files = list_files(paths)
+# print("START")
 fails = []
 success = []
-#ID, people{name:numMessages}, [dates, times, users, images]
 
 for f in tqdm(files):
     try:
-    if(f != ".DS_Store" and f != "stickers_used"): # ignore other generic files
-        filename = os.path.join(f, "message.json")
-        success.append(parse_file(filename))
+        if(f != ".DS_Store"): # ignore other generic files
+            filename = os.path.join(f, "message.json")
+            success.append(parse_file(filename))
     except Exception as e:
         print("Failed to parse. Exception: ", repr(e), " ", root, "/", filename)
         fails.append(f)
 
-pkl.dump(success, open("../../messages.pkl", "wb"))
-pkl.dump(fails, open("../../fails.pkl", "wb"))
+pkl.dump(success, open("messages.pkl", "wb"))
+pkl.dump(fails, open("fails.pkl", "wb"))
