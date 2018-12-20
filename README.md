@@ -31,13 +31,18 @@ Remember, Python3 only.
 2. update userinfo.py with your correct information  
 3. run the correct parser for the formatting you chose  
       `python json_parse.py`
-4. If you have Jupyter open analyze.ipynb  and __skip step 5__  
+4. If you have Jupyter open analyze.ipynb    
   a. Run all the individual cells (This can easily be done by clicking "Cell" --> "Run All")  
   b. Graphs are somewhat interactive - you can zoom in and stuff  
+  c. __skip step 5__
 5. run analyze.py  
       `python analyze.py`  
 6. Graphs will be saved in the 'graphs' folder
-
+7. If you want to create a chatbot from your messages   
+  a. run chatbot_export.py  
+      `python chatbot_export.py`  
+  b. go to the [facebook-messages-chatbot](https://github.com/ArmaanSethi/facebook-messages-chatbot) repo  
+     
 ## Contributing
 1. Fork it!
 2. Create your feature branch: `git checkout -b my-new-feature`
