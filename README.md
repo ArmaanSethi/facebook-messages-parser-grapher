@@ -12,7 +12,7 @@ Updated December 20th, 2018.
 
 ## Setup
 1. Clone this repository
-2. Go to your Facebook settings and select "Download a copy of your Facebook data" (should be under General Account Settings)  
+2. Go to your [Facebook settings](https://www.facebook.com/settings) and select "Download a copy of your Facebook data" (should be under General Account Settings)  
   a. Login to Facebook  
   b. Click the down arrow beside the question mark button  
   c. Click "Settings"  
