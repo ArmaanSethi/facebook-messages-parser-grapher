@@ -91,11 +91,13 @@ success = []
 for f in tqdm(files):
     try:
         if(f != ".DS_Store"): # ignore other generic files
-            filename = os.path.join(f, "message.json")
+            filename = os.path.join(f, "message_1.json")
             success.append(parse_file(filename))
     except Exception as e:
-        print("Failed to parse. Exception: ", repr(e), " ", root, "/", filename)
+        print("Failed to parse. Exception: ", repr(e), " ", "/", filename)
         fails.append(f)
 
 pkl.dump(success, open("messages.pkl", "wb"))
+print("Dumped messages.pkl")
 pkl.dump(fails, open("fails.pkl", "wb"))
+print("Dumped fails.pkl")
