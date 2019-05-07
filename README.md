@@ -1,6 +1,6 @@
 # Facebook Parser/Grapher
 ### Parse all of your facebook messages using _**Python3**_  
-Updated December 20th, 2018.
+Updated May 7th, 2019.
 
 ## Example Graphs 
 <span><img src="https://user-images.githubusercontent.com/25948390/44682733-81fade80-aa44-11e8-8339-3a38a5d22f21.png" width="375">
