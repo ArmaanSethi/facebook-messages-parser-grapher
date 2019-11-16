@@ -57,3 +57,7 @@ Remember, Python3 only.
   
 2. Creating a way to measure average reply time <br>
     - I have no idea how I would create this metric, all help is welcome.
+
+3. Analysis of message reactions  
+4. Public Google Colab Notebook  
+
