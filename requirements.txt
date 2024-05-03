@@ -14,4 +14,4 @@ numpy == 1.14.2
 pandas == 0.22.0
 
 # parse.py: 5
-tqdm == 4.19.4
+tqdm == 4.66.3
