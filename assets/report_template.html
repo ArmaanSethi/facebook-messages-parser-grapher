@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messenger Insights - {{ title }}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&family=Space+Grotesk:wght@700&display=swap"
+        rel="stylesheet">
+
+    <!-- Plotly & Lodash -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #bb86fc, #03dac6);
+            border-radius: 4px;
+        }
+
+        /* Animated Background */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(-45deg, #0d0d1a, #1a1a2e, #16213e, #0f3460);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        @keyframes gradientShift {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Hero Title */
+        .hero {
+            text-align: center;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, #bb86fc 0%, #03dac6 50%, #cf6679 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        /* Respect user motion preferences */
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        @keyframes titleGlow {
+            from {
+                filter: drop-shadow(0 0 20px rgba(187, 134, 252, 0.3));
+            }
+
+            to {
+                filter: drop-shadow(0 0 40px rgba(3, 218, 198, 0.4));
+            }
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Glassmorphism Cards */
+        .card {
+            background: rgba(30, 30, 46, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.01);
+            border-color: rgba(187, 134, 252, 0.3);
+            box-shadow:
+                0 20px 60px rgba(187, 134, 252, 0.15),
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* Control Bar */
+        .controls {
+            background: rgba(30, 30, 46, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 20px 30px;
+            border-radius: 16px;
+            margin-bottom: 40px;
+            display: flex;
+            gap: 24px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 600;
+        }
+
+        input[type="date"],
+        input[type="number"] {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #bb86fc;
+            box-shadow: 0 0 20px rgba(187, 134, 252, 0.2);
+        }
+
+        button {
+            background: linear-gradient(135deg, #bb86fc 0%, #9c64fb 100%);
+            color: #000;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(187, 134, 252, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Stats Grid */
+        .grid-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .stat-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #03dac6 0%, #00f5d4 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+        }
+
+        /* Section Headers */
+        h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, #cf6679, #bb86fc);
+            border-radius: 2px;
+        }
+
+        /* Chart Container */
+        .plotly-graph-div {
+            width: 100%;
+            height: 450px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 900px) {
+            .chart-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Social Cards Section */
+        .social-section {
+            margin-top: 80px;
+            padding-top: 60px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .social-section h1 {
+            font-size: clamp(2rem, 4vw, 2.5rem);
+            margin-bottom: 10px;
+        }
+
+        .social-section .subtitle {
+            margin-bottom: 40px;
+        }
+
+        .story-grid {
+            display: flex;
+            gap: 24px;
+            overflow-x: auto;
+            padding: 20px 0 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .story-card {
+            width: 280px;
+            height: 500px;
+            border-radius: 24px;
+            position: relative;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 30px;
+            color: #fff;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .story-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: inherit;
+            filter: blur(0);
+            z-index: -1;
+        }
+
+        .story-card:hover {
+            transform: translateY(-12px) rotate(1deg);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Card Themes */
+        .story-card.theme-purple {
+            background: linear-gradient(135deg, #2c003e 0%, #1a0033 50%, #4a00e0 100%);
+        }
+
+        .story-card.theme-teal {
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        }
+
+        .story-card.theme-pink {
+            background: linear-gradient(135deg, #360033 0%, #0b8793 100%);
+        }
+
+        .story-card.theme-gold {
+            background: linear-gradient(135deg, #232526 0%, #414345 50%, #f7971e 100%);
+        }
+
+        .story-card.theme-neon {
+            background: linear-gradient(135deg, #000428 0%, #004e92 100%);
+        }
+
+        .story-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 20px currentColor);
+        }
+
+        .story-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .story-stat {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 4.5rem;
+            font-weight: 700;
+            margin: 10px 0;
+            text-shadow: 0 0 40px currentColor;
+        }
+
+        .story-sub {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .story-badge {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin-top: auto;
+        }
+
+        /* Loading Skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        /* Floating Particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(187, 134, 252, 0.3);
+            border-radius: 50%;
+            animation: float 15s infinite;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 80px;
+            padding: 40px 20px;
+            color: #555;
+            font-size: 0.85rem;
+        }
+
+        .footer a {
+            color: #bb86fc;
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .controls {
+                padding: 16px;
+                gap: 16px;
+            }
+
+            .stat-value {
+                font-size: 2.5rem;
+            }
+
+            .story-card {
+                width: 260px;
+                height: 460px;
+            }
+
+            .story-stat {
+                font-size: 3.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Floating Particles -->
+    <div class="particles" id="particles"></div>
+
+    <div class="container">
+        <!-- Hero -->
+        <div class="hero">
+            <h1>Your Messenger Wrapped ✨</h1>
+            <p class="subtitle">{{ title }}</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-group">
+                <label>Start Date</label>
+                <input type="date" id="start-date" onchange="updateDashboard()">
+            </div>
+            <div class="control-group">
+                <label>End Date</label>
+                <input type="date" id="end-date" onchange="updateDashboard()">
+            </div>
+            <div class="control-group">
+                <label>Top N Emojis</label>
+                <input type="number" id="top-n" value="10" min="5" max="50" onchange="updateEmojiChart()">
+            </div>
+            <button onclick="resetFilters()">Reset</button>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid-stats">
+            <div class="card stat-card">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Messages Exchanged</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-value" id="stat-days">0</div>
+                <div class="stat-label">Days Connected</div>
+            </div>
+        </div>
+
+        <!-- Timeline -->
+        <div class="card" style="margin-bottom: 30px;">
+            <h2>Message Volume Over Time</h2>
+            <div id="timeline-plot" class="plotly-graph-div"></div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="chart-grid">
+            <div class="card">
+                <h2>Activity Heatmap</h2>
+                <div id="heatmap-plot" class="plotly-graph-div"></div>
+            </div>
+            <div class="card">
+                <h2>Top Emojis</h2>
+                <div id="emoji-plot" class="plotly-graph-div"></div>
+            </div>
+        </div>
+
+        <div class="chart-grid">
+            <div class="card">
+                <h2>Reaction Matrix</h2>
+                <div id="reaction-plot" class="plotly-graph-div"></div>
+            </div>
+            <div class="card">
+                <h2>Who's More Verbose?</h2>
+                <div id="verbosity-plot" class="plotly-graph-div"></div>
+            </div>
+        </div>
+
+        <!-- Social Share Cards -->
+        <div class="social-section">
+            <div class="hero">
+                <h1>Share Your Stats 📸</h1>
+                <p class="subtitle">Screenshot these for your story</p>
+            </div>
+
+            <div class="story-grid">
+                <!-- Card 1: Total Messages -->
+                <div class="story-card theme-purple">
+                    <div class="story-icon">💬</div>
+                    <div class="story-title">You Talked<br>A Lot</div>
+                    <div class="story-stat" id="card-total">0</div>
+                    <div class="story-sub">Total Messages</div>
+                    <div class="story-badge"><span class="dynamic-year">2024</span></div>
+                </div>
+
+                <!-- Card 2: Top Emoji -->
+                <div class="story-card theme-teal">
+                    <div class="story-icon">🎭</div>
+                    <div class="story-title">Your Vibe</div>
+                    <div class="story-stat" id="card-emoji">?</div>
+                    <div class="story-sub">Most Used Emoji</div>
+                    <div class="story-badge"><span class="dynamic-year">2024</span></div>
+                </div>
+
+                <!-- Card 3: Days Active -->
+                <div class="story-card theme-pink">
+                    <div class="story-icon">🔥</div>
+                    <div class="story-title">BFF Status</div>
+                    <div class="story-stat" id="card-days">0</div>
+                    <div class="story-sub">Days Connected</div>
+                    <div class="story-badge"><span class="dynamic-year">2024</span></div>
+                </div>
+
+                <!-- Card 4: Night Owl -->
+                <div class="story-card theme-neon">
+                    <div class="story-icon">🌙</div>
+                    <div class="story-title">Night Owl</div>
+                    <div class="story-stat" id="card-peak">?</div>
+                    <div class="story-sub">Peak Hour</div>
+                    <div class="story-badge"><span class="dynamic-year">2024</span></div>
+                </div>
+
+                <!-- Card 5: Streak -->
+                <div class="story-card theme-gold">
+                    <div class="story-icon">⚡</div>
+                    <div class="story-title">On Fire</div>
+                    <div class="story-stat" id="card-streak">?</div>
+                    <div class="story-sub">Average Per Day</div>
+                    <div class="story-badge"><span class="dynamic-year">2024</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Generated with 💜 by <a href="#">Messenger Insights</a> • Your data never leaves your device</p>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. DATA INJECTION ---
+        const RAW_DATA = {{ frontend_data_json | safe }};
+        const EMOJI_DATA = {{ emoji_raw_json | safe }};
+        const REACTION_DATA = {{ reaction_raw_json | safe }};
+        const SENDER_COLORS = RAW_DATA.sender_colors;
+
+        // Premium Color Palette
+        const CHART_COLORS = ['#bb86fc', '#03dac6', '#cf6679', '#ffb74d', '#4fc3f7', '#81c784', '#f48fb1'];
+
+        // --- 2. PARTICLES ---
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 15 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                particle.style.background = CHART_COLORS[Math.floor(Math.random() * CHART_COLORS.length)];
+                particle.style.opacity = 0.2 + Math.random() * 0.3;
+                container.appendChild(particle);
+            }
+        }
+
+        // --- 3. NUMBER ANIMATION ---
+        function animateValue(element, start, end, duration) {
+            const range = end - start;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                const current = Math.floor(start + range * easeOut);
+
+                if (end > 1000) {
+                    element.innerText = (current / 1000).toFixed(1) + 'k';
+                } else {
+                    element.innerText = current.toLocaleString();
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        // --- 4. STATE ---
+        let filteredActivity = [];
+
+        // --- 5. INIT ---
+        function init() {
+            try {
+                createParticles();
+
+                // Set dynamic year on all badges
+                const year = new Date().getFullYear();
+                document.querySelectorAll('.dynamic-year').forEach(el => {
+                    el.textContent = 'Messenger Wrapped ' + year;
+                });
+
+                if (RAW_DATA && RAW_DATA.detailed_activity && RAW_DATA.detailed_activity.length > 0) {
+                    const dates = RAW_DATA.detailed_activity.map(d => d.date).sort();
+                    document.getElementById('start-date').value = dates[0];
+                    document.getElementById('end-date').value = dates[dates.length - 1];
+                }
+
+                renderReactions();
+                renderVerbosity();
+                updateDashboard();
+            } catch (e) {
+                console.error('Initialization error:', e);
+                document.querySelector('.container').innerHTML =
+                    '<div style="text-align:center;padding:100px;"><h1>Error Loading Report</h1><p>' + e.message + '</p></div>';
+            }
+        }
+
+        // --- 6. CORE LOGIC ---
+        function updateDashboard() {
+            const start = document.getElementById('start-date').value;
+            const end = document.getElementById('end-date').value;
+
+            filteredActivity = RAW_DATA.detailed_activity.filter(row => row.date >= start && row.date <= end);
+
+            const totalMsgs = _.sumBy(filteredActivity, 'count');
+            const uniqueDays = _.uniqBy(filteredActivity, 'date').length;
+            const avgPerDay = uniqueDays > 0 ? Math.round(totalMsgs / uniqueDays) : 0;
+
+            // Animate stats
+            animateValue(document.getElementById('stat-total'), 0, totalMsgs, 1500);
+            animateValue(document.getElementById('stat-days'), 0, uniqueDays, 1200);
+
+            // Update Social Cards
+            document.getElementById('card-total').innerText = (totalMsgs > 1000) ? (totalMsgs / 1000).toFixed(1) + 'k' : totalMsgs;
+            document.getElementById('card-days').innerText = uniqueDays;
+            document.getElementById('card-streak').innerText = avgPerDay;
+
+            // Find Top Emoji
+            if (EMOJI_DATA.length > 0) {
+                const counts = {};
+                EMOJI_DATA.forEach(i => counts[i.Emoji] = (counts[i.Emoji] || 0) + i.Count);
+                const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+                document.getElementById('card-emoji').innerText = sorted[0] ? sorted[0][0] : '?';
+            }
+
+            // Find Peak Hour
+            const hourCounts = {};
+            filteredActivity.forEach(row => {
+                hourCounts[row.hour] = (hourCounts[row.hour] || 0) + row.count;
+            });
+            const peakHour = Object.entries(hourCounts).sort((a, b) => b[1] - a[1])[0];
+            if (peakHour) {
+                const h = parseInt(peakHour[0]);
+                const ampm = h >= 12 ? 'PM' : 'AM';
+                const hour12 = h % 12 || 12;
+                document.getElementById('card-peak').innerText = hour12 + ampm;
+            }
+
+            renderTimeline();
+            renderHeatmap();
+            updateEmojiChart();
+        }
+
+        // --- 7. CHARTS ---
+        const chartLayout = {
+            template: 'plotly_dark',
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { family: 'Inter, sans-serif', color: '#aaa' },
+            margin: { t: 40, l: 50, r: 20, b: 50 },
+            hoverlabel: { bgcolor: '#1e1e2e', bordercolor: '#bb86fc', font: { family: 'Inter' } }
+        };
+
+        function renderTimeline() {
+            const grouped = _.groupBy(filteredActivity, r => r.sender);
+            const traces = [];
+            let colorIdx = 0;
+
+            for (const sender in grouped) {
+                const dateMap = _.groupBy(grouped[sender], 'date');
+                const x = Object.keys(dateMap).sort();
+                const y = x.map(d => _.sumBy(dateMap[d], 'count'));
+
+                traces.push({
+                    x, y, name: sender, type: 'scatter', mode: 'lines', fill: 'tozeroy',
+                    line: { color: CHART_COLORS[colorIdx % CHART_COLORS.length], width: 2 },
+                    fillcolor: CHART_COLORS[colorIdx % CHART_COLORS.length] + '30'
+                });
+                colorIdx++;
+            }
+
+            Plotly.newPlot('timeline-plot', traces, {
+                ...chartLayout,
+                xaxis: { showgrid: false },
+                yaxis: { showgrid: true, gridcolor: 'rgba(255,255,255,0.05)' },
+                showlegend: true,
+                legend: { orientation: 'h', y: -0.15 }
+            }, { responsive: true });
+        }
+
+        function renderHeatmap() {
+            const agg = {};
+            filteredActivity.forEach(row => {
+                const key = row.weekday + '-' + row.hour;
+                if (!agg[key]) agg[key] = { w: row.weekday, h: row.hour, c: 0 };
+                agg[key].c += row.count;
+            });
+
+            const rows = Object.values(agg);
+            const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+            const z = daysOrder.map(day => {
+                return Array.from({ length: 24 }, (_, h) => {
+                    const match = rows.find(r => r.w === day && r.h === h);
+                    return match ? match.c : 0;
+                });
+            });
+
+            Plotly.newPlot('heatmap-plot', [{
+                x: Array.from({ length: 24 }, (_, i) => i + ':00'),
+                y: daysOrder,
+                z: z,
+                type: 'heatmap',
+                colorscale: [
+                    [0, '#0d0d1a'],
+                    [0.25, '#1a1a2e'],
+                    [0.5, '#4a1a6b'],
+                    [0.75, '#bb86fc'],
+                    [1, '#03dac6']
+                ],
+                showscale: false,
+                hovertemplate: '<b>%{y}</b> at <b>%{x}</b><br>%{z} messages<extra></extra>'
+            }], {
+                ...chartLayout,
+                xaxis: { side: 'top' },
+            }, { responsive: true });
+        }
+
+        function updateEmojiChart() {
+            const topN = parseInt(document.getElementById('top-n').value) || 10;
+            const globalCounts = {};
+            EMOJI_DATA.forEach(item => {
+                globalCounts[item.Emoji] = (globalCounts[item.Emoji] || 0) + item.Count;
+            });
+
+            const topEmojis = Object.entries(globalCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, topN)
+                .map(e => e[0]);
+
+            const filtered = EMOJI_DATA.filter(item => topEmojis.includes(item.Emoji));
+            filtered.sort((a, b) => b.Count - a.Count);
+
+            const grouped = _.groupBy(filtered, 'Sender');
+            const traces = [];
+            let colorIdx = 0;
+
+            for (const sender in grouped) {
+                traces.push({
+                    x: grouped[sender].map(i => i.Count),
+                    y: grouped[sender].map(i => i.Emoji),
+                    orientation: 'h', name: sender, type: 'bar',
+                    marker: {
+                        color: CHART_COLORS[colorIdx % CHART_COLORS.length],
+                        line: { width: 0 }
+                    }
+                });
+                colorIdx++;
+            }
+
+            Plotly.newPlot('emoji-plot', traces, {
+                ...chartLayout,
+                barmode: 'group',
+                yaxis: { autorange: 'reversed' },
+                showlegend: true,
+                legend: { orientation: 'h', y: -0.15 }
+            }, { responsive: true });
+        }
+
+        function renderReactions() {
+            const reactors = Object.keys(REACTION_DATA);
+            const targets = _.uniq(_.flatten(Object.values(REACTION_DATA).map(Object.keys)));
+
+            if (reactors.length === 0) {
+                document.getElementById('reaction-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No reaction data available</p>';
+                return;
+            }
+
+            const z = reactors.map(reactor => {
+                return targets.map(target => REACTION_DATA[reactor][target] || 0);
+            });
+
+            Plotly.newPlot('reaction-plot', [{
+                x: targets,
+                y: reactors,
+                z: z,
+                type: 'heatmap',
+                colorscale: [
+                    [0, '#0d0d1a'],
+                    [0.5, '#cf6679'],
+                    [1, '#ffb74d']
+                ],
+                showscale: false,
+                hovertemplate: '<b>%{y}</b> reacted to <b>%{x}</b><br>%{z} times<extra></extra>'
+            }], chartLayout, { responsive: true });
+        }
+
+        function renderVerbosity() {
+            const data = RAW_DATA.avg_length || [];
+            if (data.length === 0) {
+                document.getElementById('verbosity-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No verbosity data available</p>';
+                return;
+            }
+
+            const x = data.map(d => d.sender);
+            const y = data.map(d => d.word_count);
+
+            Plotly.newPlot('verbosity-plot', [{
+                x, y, type: 'bar',
+                marker: {
+                    color: CHART_COLORS.slice(0, x.length),
+                    line: { width: 0 }
+                },
+                hovertemplate: '<b>%{x}</b><br>%{y:.1f} words/message<extra></extra>'
+            }], {
+                ...chartLayout,
+                yaxis: { title: 'Avg Words per Message' }
+            }, { responsive: true });
+        }
+
+        function resetFilters() {
+            init();
+        }
+
+        // Run
+        init();
+    </script>
+</body>
+
+</html>

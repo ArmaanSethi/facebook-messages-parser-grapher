@@ -1,3 +1,12 @@
+# ===========================================
+# USER DATA - NEVER COMMIT
+# ===========================================
+data/
+output/
+*.zip
+*.parquet
+
+# Legacy folders
 facebook/
 facebook_json/
 facebook_html/

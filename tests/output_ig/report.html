@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messenger Insights - Report for Armaan Sethi</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            margin: 0;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #bb86fc;
+            font-size: 3em;
+            margin-bottom: 20px;
+            font-weight: 800;
+        }
+
+        /* Control Bar */
+        .controls {
+            background: #1e1e1e;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            border: 1px solid #333;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        label {
+            font-size: 0.8em;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input[type="date"],
+        input[type="number"] {
+            background: #2c2c2c;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+
+        button {
+            background: #bb86fc;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        /* Stats Grid */
+        .grid-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: #1e1e1e;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: 900;
+            color: #03dac6;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.8em;
+            text-transform: uppercase;
+        }
+
+        .stat-card {
+            text-align: center;
+        }
+
+        .plotly-graph-div {
+            width: 100%;
+            height: 500px;
+        }
+
+        h2 {
+            border-left: 4px solid #cf6679;
+            padding-left: 10px;
+            color: #e0e0e0;
+            margin-top: 0;
+        }
+
+        /* Social Cards */
+        .social-section {
+            margin-top: 60px;
+            padding-top: 40px;
+            border-top: 1px solid #333;
+        }
+
+        .story-grid {
+            display: flex;
+            gap: 20px;
+            overflow-x: auto;
+            padding: 20px 0;
+            justify-content: center;
+        }
+
+        .story-card {
+            width: 300px;
+            height: 533px;
+            /* 9:16 aspect ratio approx */
+            background: linear-gradient(135deg, #2c003e 0%, #000000 100%);
+            border-radius: 20px;
+            position: relative;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 2px solid #333;
+            text-align: center;
+            padding: 20px;
+            color: #fff;
+        }
+
+        .story-title {
+            font-size: 1.5em;
+            font-weight: 800;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background: -webkit-linear-gradient(#bb86fc, #03dac6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .story-stat {
+            font-size: 4em;
+            font-weight: 900;
+            margin: 10px 0;
+        }
+
+        .story-sub {
+            font-size: 1em;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+
+        .story-badge {
+            background: #333;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-top: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Your Messenger Wrapped 🎁</h1>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Start Date</label>
+                <input type="date" id="start-date" onchange="updateDashboard()">
+            </div>
+            <div class="control-group">
+                <label>End Date</label>
+                <input type="date" id="end-date" onchange="updateDashboard()">
+            </div>
+            <div class="control-group">
+                <label>Top N Emojis</label>
+                <input type="number" id="top-n" value="10" min="5" max="50" onchange="updateEmojiChart()">
+            </div>
+            <button onclick="resetFilters()">Reset</button>
+        </div>
+
+        <!-- Global Stats -->
+        <div class="grid-stats">
+            <div class="card stat-card">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Messages in Range</div>
+            </div>
+            <div class="card stat-card">
+                <div class="stat-value" id="stat-days">0</div>
+                <div class="stat-label">Days Active</div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 30px;">
+            <h2>Message Volume</h2>
+            <div id="timeline-plot" class="plotly-graph-div"></div>
+        </div>
+
+        <div class="grid-stats" style="grid-template-columns: 1fr 1fr;">
+            <div class="card">
+                <h2>Activity Heatmap</h2>
+                <div id="heatmap-plot" class="plotly-graph-div"></div>
+            </div>
+            <div class="card">
+                <h2>Top Emojis (Interactive)</h2>
+                <div id="emoji-plot" class="plotly-graph-div"></div>
+            </div>
+        </div>
+
+        <div class="grid-stats" style="grid-template-columns: 1fr 1fr;">
+            <div class="card">
+                <h2>Reaction Matrix</h2>
+                <div id="reaction-plot" class="plotly-graph-div"></div>
+            </div>
+            <div class="card">
+                <h2>Chat Verbosity (Avg Word Count)</h2>
+                <div id="verbosity-plot" class="plotly-graph-div"></div>
+            </div>
+        </div>
+
+        <div class="social-section">
+            <h1>Social Share Cards 📸</h1>
+            <p style="text-align:center; color:#888;">Screenshot these for your Story</p>
+            <div class="story-grid">
+                <!-- Card 1: Total Volume -->
+                <div class="story-card">
+                    <div class="story-title">You Talked<br>A Lot</div>
+                    <div class="story-stat" id="card-total">0</div>
+                    <div class="story-sub">Total Messages</div>
+                    <div class="story-badge">Messenger Wrapped</div>
+                </div>
+
+                <!-- Card 2: Top Emoji -->
+                <div class="story-card" style="background: linear-gradient(135deg, #1a0033 0%, #4a00e0 100%);">
+                    <div class="story-title">Your Vibe</div>
+                    <div class="story-stat" id="card-emoji">?</div>
+                    <div class="story-sub">Most Used Emoji</div>
+                    <div class="story-badge">Messenger Wrapped</div>
+                </div>
+
+                <!-- Card 3: Active Days -->
+                <div class="story-card"
+                    style="background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);">
+                    <div class="story-title">BFF Status</div>
+                    <div class="story-stat" id="card-days">0</div>
+                    <div class="story-sub">Days Active</div>
+                    <div class="story-badge">Messenger Wrapped</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. DATA INJECTION ---
+        const RAW_DATA = {"daily_counts": [{"date": "2020-12-22", "sender": "Armaan Sethi", "count": 1}, {"date": "2020-12-22", "sender": "Jane IG", "count": 1}], "detailed_activity": [{"date": "2020-12-22", "hour": 1, "weekday": "Tuesday", "sender": "Armaan Sethi", "count": 1}, {"date": "2020-12-22", "hour": 1, "weekday": "Tuesday", "sender": "Jane IG", "count": 1}], "sender_colors": {"Armaan Sethi": "#BB86FC", "Jane IG": "#03DAC6"}, "avg_length": [{"sender": "Armaan Sethi", "word_count": 5.0}, {"sender": "Jane IG", "word_count": 6.0}]};
+        const EMOJI_DATA = [];
+        const REACTION_DATA = {"Armaan Sethi": {"Jane IG": 1}};
+        const SENDER_COLORS = RAW_DATA.sender_colors;
+
+        // --- 2. STATE ---
+        let filteredActivity = [];
+
+        // --- 3. INIT ---
+        function init() {
+            // Find Date Range from data
+            if (RAW_DATA.detailed_activity.length > 0) {
+                const dates = RAW_DATA.detailed_activity.map(d => d.date).sort();
+                document.getElementById('start-date').value = dates[0];
+                document.getElementById('end-date').value = dates[dates.length - 1];
+            }
+            // Render Static charts (Reactions / Verbosity)
+            renderReactions();
+            renderVerbosity();
+
+            updateDashboard();
+        }
+
+        // --- 4. CORE LOGIC ---
+        function updateDashboard() {
+            const start = document.getElementById('start-date').value;
+            const end = document.getElementById('end-date').value;
+
+            // Filter Data
+            filteredActivity = RAW_DATA.detailed_activity.filter(row => row.date >= start && row.date <= end);
+
+            // Update Stats
+            const totalMsgs = _.sumBy(filteredActivity, 'count');
+            const uniqueDays = _.uniqBy(filteredActivity, 'date').length;
+
+            document.getElementById('stat-total').innerText = totalMsgs.toLocaleString();
+            document.getElementById('stat-days').innerText = uniqueDays;
+
+            // Update Social Cards
+            document.getElementById('card-total').innerText = (totalMsgs > 1000) ? (totalMsgs / 1000).toFixed(1) + 'k' : totalMsgs;
+            document.getElementById('card-days').innerText = uniqueDays;
+
+            // Find Top Emoji for Card
+            if (EMOJI_DATA.length > 0) {
+                const counts = {};
+                EMOJI_DATA.forEach(i => counts[i.Emoji] = (counts[i.Emoji] || 0) + i.Count);
+                // Convert to array and sort
+                const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+                const top = sorted[0];
+                document.getElementById('card-emoji').innerText = top ? top[0] : '?';
+            }
+
+            renderTimeline();
+            renderHeatmap();
+            updateEmojiChart();
+        }
+
+        function renderTimeline() {
+            // Aggregation: Group by Date + Sender
+            const grouped = _.groupBy(filteredActivity, r => r.sender);
+            const traces = [];
+
+            for (const sender in grouped) {
+                // Group by date
+                const dateMap = _.groupBy(grouped[sender], 'date');
+                const x = Object.keys(dateMap).sort();
+                const y = x.map(d => _.sumBy(dateMap[d], 'count'));
+
+                traces.push({
+                    x: x, y: y, name: sender, type: 'scatter', mode: 'lines', fill: 'tozeroy',
+                    marker: { color: SENDER_COLORS[sender] }
+                });
+            }
+
+            Plotly.newPlot('timeline-plot', traces, {
+                template: 'plotly_dark',
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+                margin: { t: 20, l: 40, r: 20, b: 40 }
+            }, { responsive: true });
+        }
+
+        function renderHeatmap() {
+            // Aggregation: Group by Weekday + Hour
+            const agg = {};
+            filteredActivity.forEach(row => {
+                const key = row.weekday + '-' + row.hour;
+                if (!agg[key]) agg[key] = { w: row.weekday, h: row.hour, c: 0 };
+                agg[key].c += row.count;
+            });
+
+            const rows = Object.values(agg);
+            const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+            const z = daysOrder.map(day => {
+                return Array.from({ length: 24 }, (_, h) => {
+                    const match = rows.find(r => r.w === day && r.h === h);
+                    return match ? match.c : 0;
+                });
+            });
+
+            Plotly.newPlot('heatmap-plot', [{
+                x: Array.from({ length: 24 }, (_, i) => i),
+                y: daysOrder,
+                z: z,
+                type: 'heatmap', colorscale: 'Magma'
+            }], {
+                title: 'Activity Heatmap',
+                template: 'plotly_dark',
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)'
+            }, { responsive: true });
+        }
+
+        function updateEmojiChart() {
+            const topN = parseInt(document.getElementById('top-n').value) || 10;
+            const emojiList = EMOJI_DATA.slice();
+            const globalCounts = {};
+            emojiList.forEach(item => {
+                globalCounts[item.Emoji] = (globalCounts[item.Emoji] || 0) + item.Count;
+            });
+
+            const topEmojisObj = Object.entries(globalCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, topN)
+                .map(e => e[0]);
+
+            const filteredList = emojiList.filter(item => topEmojisObj.includes(item.Emoji));
+            filteredList.sort((a, b) => b.Count - a.Count);
+
+            const grouped = _.groupBy(filteredList, 'Sender');
+            const traces = [];
+
+            for (const sender in grouped) {
+                traces.push({
+                    x: grouped[sender].map(i => i.Count),
+                    y: grouped[sender].map(i => i.Emoji),
+                    orientation: 'h', name: sender, type: 'bar',
+                    marker: { color: SENDER_COLORS[sender] }
+                });
+            }
+
+            Plotly.newPlot('emoji-plot', traces, {
+                title: `Top ${topN} Emojis`,
+                barmode: 'group',
+                template: 'plotly_dark',
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+                yaxis: { autorange: 'reversed' }
+            }, { responsive: true });
+        }
+
+        function renderReactions() {
+            // REACTION_DATA structure: {Reactor: {Target: Count}}
+            // We want a Heatmap: X=Target, Y=Reactor
+
+            const reactors = Object.keys(REACTION_DATA);
+            const targets = _.uniq(_.flatten(Object.values(REACTION_DATA).map(Object.keys)));
+
+            if (reactors.length === 0) return;
+
+            const z = reactors.map(reactor => {
+                return targets.map(target => REACTION_DATA[reactor][target] || 0);
+            });
+
+            Plotly.newPlot('reaction-plot', [{
+                x: targets,
+                y: reactors,
+                z: z,
+                type: 'heatmap', colorscale: 'Viridis'
+            }], {
+                title: 'Reaction Matrix (Who reacted to whom?)',
+                template: 'plotly_dark',
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)'
+            }, { responsive: true });
+        }
+
+        function renderVerbosity() {
+            // RAW_DATA.avg_length: [{sender: 'Name', word_count: 5.5}, ...]
+            const data = RAW_DATA.avg_length || [];
+            if (data.length === 0) return;
+
+            const x = data.map(d => d.sender);
+            const y = data.map(d => d.word_count);
+            const colors = x.map(s => SENDER_COLORS[s]);
+
+            Plotly.newPlot('verbosity-plot', [{
+                x: x, y: y, type: 'bar', marker: { color: colors }
+            }], {
+                title: 'Average Message Length (Words)',
+                template: 'plotly_dark',
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)'
+            }, { responsive: true });
+        }
+
+        function resetFilters() {
+            init();
+        }
+
+        // Run
+        init();
+    </script>
+</body>
+
+</html>
