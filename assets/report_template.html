@@ -638,8 +638,8 @@
                 <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">How others react to your messages</p>
                 <div id="reactions-received-plot" class="plotly-graph-div"></div>
             </div>
-            <!-- Reaction Matrix: Only visible in chat mode -->
-            <div class="card" id="reaction-section" style="display: none;">
+            <!-- Reaction Matrix: Full-width, only visible in chat mode -->
+            <div class="card" id="reaction-section" style="display: none; grid-column: 1 / -1;">
                 <h2>Reaction Matrix</h2>
                 <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Who reacts to whose messages</p>
                 <div id="reaction-plot" class="plotly-graph-div"></div>
@@ -931,10 +931,14 @@
                 topChatsSection.style.display = isOverview ? 'block' : 'none';
             }
 
-            // Show/hide Reaction Matrix card (only in chat mode)
+            // Show/hide Reaction Matrix and Monthly Trend cards (only in chat mode)
             const reactionSection = document.getElementById('reaction-section');
+            const monthlyTrendSection = document.getElementById('monthly-trend-section');
             if (reactionSection) {
                 reactionSection.style.display = isOverview ? 'none' : 'block';
+            }
+            if (monthlyTrendSection) {
+                monthlyTrendSection.style.display = isOverview ? 'none' : 'block';
             }
 
             // Make all chart cards full-width in overview mode for better readability
