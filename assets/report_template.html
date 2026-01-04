@@ -306,6 +306,8 @@
             padding: 20px 0 40px;
             justify-content: center;
             flex-wrap: wrap;
+            max-width: 920px;
+            margin: 0 auto;
         }
 
         .story-card {
@@ -571,14 +573,15 @@
         <!-- Charts Grid -->
         <div class="chart-grid">
             <div class="card">
-                <h2>Activity Heatmap</h2>
-                <div id="heatmap-plot" class="plotly-graph-div"></div>
-            </div>
-            <div class="card">
                 <h2>Top Reactions</h2>
                 <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Reaction emojis (👍❤️😆) added to
                     messages</p>
                 <div id="reactions-emoji-plot" class="plotly-graph-div"></div>
+            </div>
+            <div class="card" id="reaction-section">
+                <h2>Reaction Matrix</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Who reacts to whose messages</p>
+                <div id="reaction-plot" class="plotly-graph-div"></div>
             </div>
         </div>
 
@@ -595,11 +598,9 @@
         </div>
 
         <div class="chart-grid">
-            <div class="card" id="reaction-section">
-                <h2>Reaction Matrix</h2>
-                <p style="color: #888; font-size: 0.85rem; margin-bottom: 15px;">Who reacts to whose messages (select a
-                    specific chat above)</p>
-                <div id="reaction-plot" class="plotly-graph-div"></div>
+            <div class="card">
+                <h2>Activity Heatmap</h2>
+                <div id="heatmap-plot" class="plotly-graph-div"></div>
             </div>
         </div>
 
