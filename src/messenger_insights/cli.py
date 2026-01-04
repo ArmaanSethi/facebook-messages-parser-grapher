@@ -45,7 +45,11 @@ def analyze(
             for msg in message_stream():
                 all_messages.append(msg)
                 if 'reactions' in msg:
-                    reaction_messages.append({'sender_name': msg.get('sender_name'), 'reactions': msg['reactions']})
+                    reaction_messages.append({
+                        'sender_name': msg.get('sender_name'), 
+                        'reactions': msg['reactions'],
+                        'conv_title': msg.get('conv_title', 'Unknown')
+                    })
         
         # Process the list (In-memory acceptable for <2GB JSONs)
         
@@ -89,7 +93,7 @@ def analyze(
         out_path.mkdir(exist_ok=True)
         
         # Prepare Data for Interactive Frontend
-        # reaction_map was computed in step 2
+        # reaction_map contains 'global' and 'per_conv' 
         frontend_data = proc.prepare_frontend_data(df)
         emoji_raw = viz.get_emoji_data(emoji_counts)
         
@@ -106,7 +110,8 @@ def analyze(
             # Pass Raw JSONs as strings
             "frontend_data_json": json.dumps(frontend_data),
             "emoji_raw_json": json.dumps(emoji_raw),
-            "reaction_raw_json": json.dumps(reaction_map)
+            "reaction_raw_json": json.dumps(reaction_map.get('global', {})),
+            "reaction_per_conv_json": json.dumps(reaction_map.get('per_conv', {}))
         }
         
         # Static Export Feature (Optional)

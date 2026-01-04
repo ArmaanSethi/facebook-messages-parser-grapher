@@ -29,15 +29,18 @@ class MessageAnalytics:
             
         return emoji_counts
 
-    def analyze_reactions(self, messages_stream: List[Dict]) -> Dict[str, Dict[str, int]]:
-        """Parses raw message stream to find who reacts to whom."""
-        # Note: This logic works on raw dicts (stream) because reactions 
-        # are nested lists which flatten poorly in simple DataFrames
+    def analyze_reactions(self, messages_stream: List[Dict]) -> Dict[str, Any]:
+        """Parses raw message stream to find who reacts to whom.
         
-        reaction_map = {} # {reactor: {target_sender: count}}
+        Returns:
+            Dict with 'global' reaction map and 'per_conv' reaction maps
+        """
+        global_map = {}  # {reactor: {target_sender: count}}
+        per_conv = {}    # {conv_title: {reactor: {target_sender: count}}}
         
         for msg in messages_stream:
             target_sender = msg.get('sender_name')
+            conv_title = msg.get('conv_title', 'Unknown')
             if not target_sender:
                 continue
                 
@@ -45,13 +48,20 @@ class MessageAnalytics:
                 reactor = reaction.get('actor')
                 if not reactor:
                     continue
-                    
-                if reactor not in reaction_map:
-                    reaction_map[reactor] = {}
                 
-                reaction_map[reactor][target_sender] = reaction_map[reactor].get(target_sender, 0) + 1
+                # Update global map
+                if reactor not in global_map:
+                    global_map[reactor] = {}
+                global_map[reactor][target_sender] = global_map[reactor].get(target_sender, 0) + 1
                 
-        return reaction_map
+                # Update per-conversation map
+                if conv_title not in per_conv:
+                    per_conv[conv_title] = {}
+                if reactor not in per_conv[conv_title]:
+                    per_conv[conv_title][reactor] = {}
+                per_conv[conv_title][reactor][target_sender] = per_conv[conv_title][reactor].get(target_sender, 0) + 1
+                
+        return {'global': global_map, 'per_conv': per_conv}
 
     def calculate_response_times(self, df: pd.DataFrame, my_name: str) -> Dict[str, float]:
         """Calculates median response times for you vs them."""

@@ -71,8 +71,8 @@ class MessageProcessor:
             df['word_count'] = 0
             df['char_count'] = 0
 
-        # Select & Rename Columns
-        cols_to_keep = ['timestamp', 'sender_name', 'content', 'type', 'word_count', 'char_count', 'date', 'year', 'month', 'weekday', 'hour']
+        # Select & Rename Columns - include conv_title for filtering
+        cols_to_keep = ['timestamp', 'sender_name', 'content', 'type', 'word_count', 'char_count', 'date', 'year', 'month', 'weekday', 'hour', 'conv_title']
         # Only keep columns that actually exist in the data
         final_cols = [c for c in cols_to_keep if c in df.columns]
         
@@ -89,35 +89,51 @@ class MessageProcessor:
     def prepare_frontend_data(self, df: pd.DataFrame) -> Dict[str, Any]:
         """Prepares lightweight JSON-serializable data for client-side interactivity."""
         if df.empty:
-            return {'daily_counts': [], 'detailed_activity': [], 'sender_colors': {}}
-            
-        # 1. Daily Message Counts (for Timeline & filtering)
-        # We aggregate by Day and Sender to allow client-side filtering
-        daily = df.groupby(['date', 'sender']).size().reset_index(name='count')
-        daily['date'] = daily['date'].astype(str) # Serialize date
+            return {'daily_counts': [], 'detailed_activity': [], 'sender_colors': {}, 'conversations': []}
         
-        # 2. Sender Color Mapping (consistent colors in UI)
+        # 1. Build conversation metadata list
+        conversations = []
+        if 'conv_title' in df.columns:
+            for conv_title in df['conv_title'].unique():
+                conv_df = df[df['conv_title'] == conv_title]
+                participants = conv_df['sender'].unique().tolist()
+                is_group = len(participants) > 2
+                conversations.append({
+                    'title': conv_title,
+                    'participants': participants,
+                    'participant_count': len(participants),
+                    'is_group': is_group,
+                    'message_count': len(conv_df)
+                })
+            # Sort by message count descending
+            conversations.sort(key=lambda x: x['message_count'], reverse=True)
+            
+        # 2. Daily Message Counts (for Timeline & filtering)
+        # Now include conv_title for per-chat filtering
+        group_cols = ['date', 'sender']
+        if 'conv_title' in df.columns:
+            group_cols.append('conv_title')
+        daily = df.groupby(group_cols).size().reset_index(name='count')
+        daily['date'] = daily['date'].astype(str)
+        
+        # 3. Sender Color Mapping (consistent colors in UI)
         senders = df['sender'].unique().tolist()
-        # Simple consistent palette generator
         palette = ['#BB86FC', '#03DAC6', '#CF6679', '#FFB74D', '#4FC3F7', '#90CAF9', '#A5D6A7']
         sender_colors = {s: palette[i % len(palette)] for i, s in enumerate(senders)}
         
-        # 3. Hourly Activity (Pre-aggregated for performance)
-        detailed_activity = df.groupby(['date', 'hour', 'weekday', 'sender']).size().reset_index(name='count')
+        # 4. Hourly Activity with conv_title
+        detail_cols = ['date', 'hour', 'weekday', 'sender']
+        if 'conv_title' in df.columns:
+            detail_cols.append('conv_title')
+        detailed_activity = df.groupby(detail_cols).size().reset_index(name='count')
         detailed_activity['date'] = detailed_activity['date'].astype(str)
         
-        # 4. Reaction Matrix (Who reacts to whom) - Requires parsing 'reactions' content if accessible
-        # Since 'reactions' might be a list-of-dicts nested in the raw stream, 
-        # and we flattened it in the processor, we need to check if we kept it.
-        # Current processor keeps 'content' and 'type'. 
-        # To support reactions properly, we need to rely on the Analytics module passing it, 
-        # or re-aggregate here if we have columns.
-        # For this implementation, we will assume 'word_count' is available for Avg Length.
-        
+        # 5. Avg word count per sender
         avg_len = df.groupby('sender')['word_count'].mean().reset_index()
         avg_len['word_count'] = avg_len['word_count'].round(1)
         
         return {
+            'conversations': conversations,
             'daily_counts': daily.to_dict(orient='records'),
             'detailed_activity': detailed_activity.to_dict(orient='records'),
             'sender_colors': sender_colors,

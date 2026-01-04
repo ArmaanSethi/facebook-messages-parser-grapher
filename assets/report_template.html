@@ -523,6 +523,12 @@
 
         <!-- Controls -->
         <div class="controls">
+            <div class="control-group" style="flex: 2;">
+                <label>📍 Conversation</label>
+                <select id="conv-filter" onchange="onConversationChange()">
+                    <option value="__overview__">🌐 Overview (All Chats)</option>
+                </select>
+            </div>
             <div class="control-group">
                 <label>Start Date</label>
                 <input type="date" id="start-date" onchange="updateDashboard()">
@@ -536,6 +542,12 @@
                 <input type="number" id="top-n" value="10" min="5" max="50" onchange="updateEmojiChart()">
             </div>
             <button onclick="resetFilters()">Reset</button>
+        </div>
+
+        <!-- Top Chats Leaderboard (Only visible in Overview mode) -->
+        <div class="card" id="top-chats-section" style="margin-bottom: 30px;">
+            <h2>🏆 Your Most Active Chats</h2>
+            <div id="top-chats-list" style="display: grid; gap: 12px;"></div>
         </div>
 
         <!-- Stats Cards -->
@@ -569,8 +581,10 @@
         </div>
 
         <div class="chart-grid">
-            <div class="card">
+            <div class="card" id="reaction-section">
                 <h2>Reaction Matrix</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 15px;">Who reacts to whose messages (select a
+                    specific chat above)</p>
                 <div id="reaction-plot" class="plotly-graph-div"></div>
             </div>
             <div class="card">
@@ -645,7 +659,9 @@
         const RAW_DATA = {{ frontend_data_json | safe }};
         const EMOJI_DATA = {{ emoji_raw_json | safe }};
         const REACTION_DATA = {{ reaction_raw_json | safe }};
+        const REACTION_PER_CONV = {{ reaction_per_conv_json | safe }};
         const SENDER_COLORS = RAW_DATA.sender_colors;
+        const CONVERSATIONS = RAW_DATA.conversations || [];
 
         // Premium Color Palette
         const CHART_COLORS = ['#bb86fc', '#03dac6', '#cf6679', '#ffb74d', '#4fc3f7', '#81c784', '#f48fb1'];
@@ -691,11 +707,107 @@
 
         // --- 4. STATE ---
         let filteredActivity = [];
+        let currentConv = '__overview__';  // Current conversation filter
+
+        // --- 4.1 CONVERSATION FILTER LOGIC ---
+        function getActiveReactionData() {
+            if (currentConv === '__overview__') {
+                return null;  // Don't show reaction matrix in overview
+            }
+            return REACTION_PER_CONV[currentConv] || REACTION_DATA;
+        }
+
+        function isOverviewMode() {
+            return currentConv === '__overview__';
+        }
+
+        function populateConversationDropdown() {
+            const select = document.getElementById('conv-filter');
+            if (!select || !CONVERSATIONS.length) return;
+
+            // Clear existing options except first
+            select.innerHTML = '<option value="__overview__">🌐 Overview (All Chats)</option>';
+
+            // Separate DMs and groups
+            const dms = CONVERSATIONS.filter(c => !c.is_group);
+            const groups = CONVERSATIONS.filter(c => c.is_group);
+
+            // Add DMs
+            if (dms.length > 0) {
+                const dmGroup = document.createElement('optgroup');
+                dmGroup.label = '💬 Direct Messages';
+                dms.forEach(conv => {
+                    const opt = document.createElement('option');
+                    opt.value = conv.title;
+                    opt.textContent = `${conv.title} (${conv.message_count.toLocaleString()})`;
+                    dmGroup.appendChild(opt);
+                });
+                select.appendChild(dmGroup);
+            }
+
+            // Add Groups
+            if (groups.length > 0) {
+                const grpGroup = document.createElement('optgroup');
+                grpGroup.label = '👥 Group Chats';
+                groups.forEach(conv => {
+                    const opt = document.createElement('option');
+                    opt.value = conv.title;
+                    opt.textContent = `${conv.title} (${conv.participant_count} people)`;
+                    grpGroup.appendChild(opt);
+                });
+                select.appendChild(grpGroup);
+            }
+        }
+
+        function renderTopChats() {
+            const container = document.getElementById('top-chats-list');
+            if (!container) return;
+
+            const top5 = CONVERSATIONS.slice(0, 5);
+            container.innerHTML = top5.map((conv, i) => {
+                const medal = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][i];
+                const type = conv.is_group ? '👥' : '💬';
+                return `
+                    <div style="display: flex; align-items: center; padding: 12px 16px; background: rgba(255,255,255,0.05); border-radius: 10px; cursor: pointer;" 
+                         onclick="selectConversation('${conv.title.replace(/'/g, "\\'")}')">
+                        <span style="font-size: 1.5rem; margin-right: 12px;">${medal}</span>
+                        <span style="flex: 1; font-weight: 600;">${type} ${conv.title}</span>
+                        <span style="color: #03dac6; font-weight: 700;">${conv.message_count.toLocaleString()}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectConversation(title) {
+            document.getElementById('conv-filter').value = title;
+            onConversationChange();
+        }
+
+        function onConversationChange() {
+            currentConv = document.getElementById('conv-filter').value;
+
+            // Show/hide Top Chats section based on mode
+            const topChatsSection = document.getElementById('top-chats-section');
+            const reactionSection = document.getElementById('reaction-section');
+
+            if (topChatsSection) {
+                topChatsSection.style.display = isOverviewMode() ? 'block' : 'none';
+            }
+            if (reactionSection) {
+                reactionSection.style.display = isOverviewMode() ? 'none' : 'block';
+            }
+
+            updateDashboard();
+        }
 
         // --- 5. INIT ---
         function init() {
             try {
                 createParticles();
+
+                // Populate conversation dropdown
+                populateConversationDropdown();
+                renderTopChats();
 
                 // Set dynamic year on all badges
                 const year = new Date().getFullYear();
@@ -709,7 +821,12 @@
                     document.getElementById('end-date').value = dates[dates.length - 1];
                 }
 
-                renderReactions();
+                // Initial visibility: show Top Chats, hide Reaction Matrix
+                const topChatsSection = document.getElementById('top-chats-section');
+                const reactionSection = document.getElementById('reaction-section');
+                if (topChatsSection) topChatsSection.style.display = 'block';
+                if (reactionSection) reactionSection.style.display = 'none';
+
                 renderVerbosity();
                 updateDashboard();
             } catch (e) {
@@ -724,7 +841,12 @@
             const start = document.getElementById('start-date').value;
             const end = document.getElementById('end-date').value;
 
-            filteredActivity = RAW_DATA.detailed_activity.filter(row => row.date >= start && row.date <= end);
+            // Filter by date AND conversation
+            filteredActivity = RAW_DATA.detailed_activity.filter(row => {
+                const dateMatch = row.date >= start && row.date <= end;
+                const convMatch = currentConv === '__overview__' || row.conv_title === currentConv;
+                return dateMatch && convMatch;
+            });
 
             const totalMsgs = _.sumBy(filteredActivity, 'count');
             const uniqueDays = _.uniqBy(filteredActivity, 'date').length;
@@ -763,6 +885,11 @@
             renderTimeline();
             renderHeatmap();
             updateEmojiChart();
+
+            // Only render reactions when viewing a specific chat
+            if (!isOverviewMode()) {
+                renderReactions();
+            }
         }
 
         // --- 7. CHARTS ---
@@ -771,7 +898,7 @@
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'rgba(0,0,0,0)',
             font: { family: 'Inter, sans-serif', color: '#aaa' },
-            margin: { t: 40, l: 50, r: 20, b: 50 },
+            margin: { t: 40, l: 120, r: 20, b: 50 },
             hoverlabel: { bgcolor: '#1e1e2e', bordercolor: '#bb86fc', font: { family: 'Inter' } }
         };
 
@@ -882,16 +1009,24 @@
         }
 
         function renderReactions() {
-            const reactors = Object.keys(REACTION_DATA);
-            const targets = _.uniq(_.flatten(Object.values(REACTION_DATA).map(Object.keys)));
+            // Get the appropriate reaction data based on current conversation
+            const reactionData = getActiveReactionData();
+
+            if (!reactionData) {
+                document.getElementById('reaction-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">Select a specific chat to see the reaction matrix</p>';
+                return;
+            }
+
+            const reactors = Object.keys(reactionData);
+            const targets = _.uniq(_.flatten(Object.values(reactionData).map(Object.keys)));
 
             if (reactors.length === 0) {
-                document.getElementById('reaction-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No reaction data available</p>';
+                document.getElementById('reaction-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No reaction data for this chat</p>';
                 return;
             }
 
             const z = reactors.map(reactor => {
-                return targets.map(target => REACTION_DATA[reactor][target] || 0);
+                return targets.map(target => reactionData[reactor][target] || 0);
             });
 
             Plotly.newPlot('reaction-plot', [{
