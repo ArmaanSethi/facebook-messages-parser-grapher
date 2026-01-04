@@ -40,13 +40,21 @@ class MessageAnalytics:
         return {'global': global_counts, 'per_conv': per_conv_counts}
 
     def analyze_reactions(self, messages_stream: List[Dict]) -> Dict[str, Any]:
-        """Parses raw message stream to find who reacts to whom.
+        """Parses raw message stream to find who reacts to whom and which reaction emojis are used.
         
         Returns:
-            Dict with 'global' reaction map and 'per_conv' reaction maps
+            Dict with:
+            - 'global': reaction map {reactor: {target: count}}
+            - 'per_conv': per-conversation reaction maps
+            - 'top_reactions': {sender: [(emoji, count), ...]}
+            - 'top_reactions_per_conv': {conv: {sender: [(emoji, count), ...]}}
         """
         global_map = {}  # {reactor: {target_sender: count}}
         per_conv = {}    # {conv_title: {reactor: {target_sender: count}}}
+        
+        # Track reaction emojis used
+        reaction_emojis = {}  # {sender: {emoji: count}}
+        reaction_emojis_per_conv = {}  # {conv: {sender: {emoji: count}}}
         
         for msg in messages_stream:
             target_sender = msg.get('sender_name')
@@ -56,6 +64,7 @@ class MessageAnalytics:
                 
             for reaction in msg.get('reactions', []):
                 reactor = reaction.get('actor')
+                reaction_emoji = reaction.get('reaction')
                 if not reactor:
                     continue
                 
@@ -71,7 +80,40 @@ class MessageAnalytics:
                     per_conv[conv_title][reactor] = {}
                 per_conv[conv_title][reactor][target_sender] = per_conv[conv_title][reactor].get(target_sender, 0) + 1
                 
-        return {'global': global_map, 'per_conv': per_conv}
+                # Track reaction emoji usage
+                if reaction_emoji:
+                    # Global
+                    if reactor not in reaction_emojis:
+                        reaction_emojis[reactor] = {}
+                    reaction_emojis[reactor][reaction_emoji] = reaction_emojis[reactor].get(reaction_emoji, 0) + 1
+                    
+                    # Per-conv
+                    if conv_title not in reaction_emojis_per_conv:
+                        reaction_emojis_per_conv[conv_title] = {}
+                    if reactor not in reaction_emojis_per_conv[conv_title]:
+                        reaction_emojis_per_conv[conv_title][reactor] = {}
+                    reaction_emojis_per_conv[conv_title][reactor][reaction_emoji] = \
+                        reaction_emojis_per_conv[conv_title][reactor].get(reaction_emoji, 0) + 1
+        
+        # Convert emoji counts to sorted lists
+        top_reactions = {
+            sender: sorted(emojis.items(), key=lambda x: x[1], reverse=True)[:10]
+            for sender, emojis in reaction_emojis.items()
+        }
+        top_reactions_per_conv = {
+            conv: {
+                sender: sorted(emojis.items(), key=lambda x: x[1], reverse=True)[:10]
+                for sender, emojis in senders.items()
+            }
+            for conv, senders in reaction_emojis_per_conv.items()
+        }
+                
+        return {
+            'global': global_map, 
+            'per_conv': per_conv,
+            'top_reactions': top_reactions,
+            'top_reactions_per_conv': top_reactions_per_conv
+        }
 
     def calculate_response_times(self, df: pd.DataFrame, my_name: str) -> Dict[str, float]:
         """Calculates median response times for you vs them."""

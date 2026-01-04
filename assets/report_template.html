@@ -576,7 +576,21 @@
             </div>
             <div class="card">
                 <h2>Top Emojis</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Emojis used in messages</p>
                 <div id="emoji-plot" class="plotly-graph-div"></div>
+            </div>
+        </div>
+
+        <div class="chart-grid">
+            <div class="card">
+                <h2>Top Reactions</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Reaction emojis (👍❤️😆) added to
+                    messages</p>
+                <div id="reactions-emoji-plot" class="plotly-graph-div"></div>
+            </div>
+            <div class="card">
+                <h2>Who's More Verbose?</h2>
+                <div id="verbosity-plot" class="plotly-graph-div"></div>
             </div>
         </div>
 
@@ -661,6 +675,8 @@
         const EMOJI_PER_CONV = {{ emoji_per_conv_json | safe }};
         const REACTION_DATA = {{ reaction_raw_json | safe }};
         const REACTION_PER_CONV = {{ reaction_per_conv_json | safe }};
+        const TOP_REACTIONS = {{ top_reactions_json | safe }};
+        const TOP_REACTIONS_PER_CONV = {{ top_reactions_per_conv_json | safe }};
         const SENDER_COLORS = RAW_DATA.sender_colors;
         const CONVERSATIONS = RAW_DATA.conversations || [];
 
@@ -715,7 +731,8 @@
             if (currentConv === '__overview__') {
                 return null;  // Don't show reaction matrix in overview
             }
-            return REACTION_PER_CONV[currentConv] || REACTION_DATA;
+            // Return per-conv data only, don't fall back to global
+            return REACTION_PER_CONV[currentConv] || null;
         }
 
         function isOverviewMode() {
@@ -864,6 +881,7 @@
             renderTimeline();
             renderHeatmap();
             updateEmojiChart();
+            renderTopReactionsChart();
             renderVerbosity();
 
             // Only render reactions when viewing a specific chat
@@ -996,6 +1014,64 @@
                 barmode: 'group',
                 xaxis: {
                     title: 'Times Used',
+                    showgrid: true,
+                    gridcolor: 'rgba(255,255,255,0.1)',
+                    zeroline: false
+                },
+                yaxis: { autorange: 'reversed', title: '' },
+                showlegend: true,
+                legend: { orientation: 'h', y: -0.2 }
+            }, { responsive: true });
+        }
+
+        function renderTopReactionsChart() {
+            // Choose data source based on current filter
+            let reactionSource = TOP_REACTIONS;
+            if (!isOverviewMode() && TOP_REACTIONS_PER_CONV[currentConv]) {
+                reactionSource = TOP_REACTIONS_PER_CONV[currentConv];
+            }
+
+            if (!reactionSource || reactionSource.length === 0) {
+                document.getElementById('reactions-emoji-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No reaction data for this selection</p>';
+                return;
+            }
+
+            // Aggregate counts per emoji
+            const emojiCounts = {};
+            reactionSource.forEach(item => {
+                emojiCounts[item.Emoji] = (emojiCounts[item.Emoji] || 0) + item.Count;
+            });
+
+            const topEmojis = Object.entries(emojiCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10)
+                .map(e => e[0]);
+
+            const filtered = reactionSource.filter(item => topEmojis.includes(item.Emoji));
+            filtered.sort((a, b) => b.Count - a.Count);
+
+            const grouped = _.groupBy(filtered, 'Sender');
+            const traces = [];
+            let colorIdx = 0;
+
+            for (const sender in grouped) {
+                traces.push({
+                    x: grouped[sender].map(i => i.Count),
+                    y: grouped[sender].map(i => i.Emoji),
+                    orientation: 'h', name: sender, type: 'bar',
+                    marker: {
+                        color: CHART_COLORS[colorIdx % CHART_COLORS.length],
+                        line: { width: 0 }
+                    }
+                });
+                colorIdx++;
+            }
+
+            Plotly.newPlot('reactions-emoji-plot', traces, {
+                ...chartLayout,
+                barmode: 'group',
+                xaxis: {
+                    title: 'Times Reacted',
                     showgrid: true,
                     gridcolor: 'rgba(255,255,255,0.1)',
                     zeroline: false

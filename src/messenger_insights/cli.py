@@ -109,6 +109,13 @@ def analyze(
                  top_emoji_display = counts[0][0]
                  break 
         
+        # Convert top reactions to frontend format
+        top_reactions_raw = viz.get_emoji_data(reaction_map.get('top_reactions', {}))
+        top_reactions_per_conv = {
+            conv: viz.get_emoji_data(sender_data)
+            for conv, sender_data in reaction_map.get('top_reactions_per_conv', {}).items()
+        }
+        
         stats_dict = {
             "title": f"Report for {my_name}",
             "top_emoji": top_emoji_display,
@@ -117,7 +124,9 @@ def analyze(
             "emoji_raw_json": json.dumps(emoji_raw),
             "emoji_per_conv_json": json.dumps(emoji_per_conv),
             "reaction_raw_json": json.dumps(reaction_map.get('global', {})),
-            "reaction_per_conv_json": json.dumps(reaction_map.get('per_conv', {}))
+            "reaction_per_conv_json": json.dumps(reaction_map.get('per_conv', {})),
+            "top_reactions_json": json.dumps(top_reactions_raw),
+            "top_reactions_per_conv_json": json.dumps(top_reactions_per_conv)
         }
         
         # Static Export Feature (Optional)
