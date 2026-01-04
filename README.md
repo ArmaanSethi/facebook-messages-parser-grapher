@@ -2,6 +2,10 @@
 
 > **Privacy-first "Spotify Wrapped" for your messages.** Generate beautiful analytics from Facebook Messenger, Instagram, and WhatsApp — all processed locally on your machine.
 
+![Last Tested](https://img.shields.io/badge/Last%20Tested-January%202026-brightgreen)
+![Python](https://img.shields.io/badge/Python-3.9+-blue)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
 <p align="center">
   <img src="docs/screenshots/hero.png" alt="Messenger Insights Dashboard" width="800">
 </p>

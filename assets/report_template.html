@@ -279,6 +279,29 @@
             border-radius: 2px;
         }
 
+        /* Year Preset Buttons */
+        .preset-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn:hover {
+            background: rgba(187, 134, 252, 0.2);
+            border-color: #bb86fc;
+            transform: translateY(-2px);
+        }
+
+        .preset-btn.preset-active {
+            background: linear-gradient(135deg, #bb86fc, #cf6679);
+            border-color: transparent;
+        }
+
         /* Chart Container */
         .plotly-graph-div {
             width: 100%;
@@ -565,6 +588,16 @@
             <button onclick="resetFilters()">Reset</button>
         </div>
 
+        <!-- Year Preset Buttons -->
+        <div class="year-presets"
+            style="display: flex; gap: 10px; justify-content: center; margin: 15px 0 25px 0; flex-wrap: wrap;">
+            <button onclick="setYearFilter(2025)" class="preset-btn">📅 2025</button>
+            <button onclick="setYearFilter(2024)" class="preset-btn">📅 2024</button>
+            <button onclick="setYearFilter(2023)" class="preset-btn">📅 2023</button>
+            <button onclick="setLast12Months()" class="preset-btn">🔄 Last 12 Months</button>
+            <button onclick="resetFilters()" class="preset-btn preset-active">🌐 All Time</button>
+        </div>
+
         <!-- Top Chats Leaderboard (Only visible in Overview mode) -->
         <div class="card" id="top-chats-section" style="margin-bottom: 30px;">
             <h2>🏆 Your Most Active Chats</h2>
@@ -593,15 +626,23 @@
             <div id="timeline-plot" class="plotly-graph-div"></div>
         </div>
 
-        <!-- Charts Grid -->
-        <div class="chart-grid">
-            <div class="card">
-                <h2>Top Reactions</h2>
-                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Reaction emojis (👍❤️😆) added to
-                    messages</p>
-                <div id="reactions-emoji-plot" class="plotly-graph-div"></div>
+        <!-- Reactions Grid: Given/Received (always) + Matrix (chat mode only) -->
+        <div class="chart-grid" id="reaction-grid">
+            <div class="card" id="reactions-given-card">
+                <h2>🎁 Reactions You Gave</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Your most used reaction emojis</p>
+                <div id="reactions-given-plot" class="plotly-graph-div"></div>
             </div>
-            <div class="card" id="reaction-section">
+            <div class="card" id="reactions-received-card">
+                <h2>🎉 Reactions You Got</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">How others react to your messages</p>
+                <div id="reactions-received-plot" class="plotly-graph-div"></div>
+            </div>
+        </div>
+
+        <!-- Reaction Matrix (only in specific chat mode) -->
+        <div class="chart-grid" id="reaction-matrix-grid" style="display: none;">
+            <div class="card" id="reaction-section" style="grid-column: 1 / -1;">
                 <h2>Reaction Matrix</h2>
                 <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Who reacts to whose messages</p>
                 <div id="reaction-plot" class="plotly-graph-div"></div>
@@ -810,7 +851,42 @@
                 document.getElementById('start-date').value = dates[0];
                 document.getElementById('end-date').value = dates[dates.length - 1];
             }
+            updatePresetActiveState('all');
             updateConvFilter(); // Use updateConvFilter to properly restore Overview mode
+        }
+
+        function setYearFilter(year) {
+            document.getElementById('start-date').value = `${year}-01-01`;
+            document.getElementById('end-date').value = `${year}-12-31`;
+            updatePresetActiveState(year);
+            updateDashboard();
+        }
+
+        function setLast12Months() {
+            const today = new Date();
+            const oneYearAgo = new Date(today);
+            oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+            document.getElementById('start-date').value = oneYearAgo.toISOString().split('T')[0];
+            document.getElementById('end-date').value = today.toISOString().split('T')[0];
+            updatePresetActiveState('last12');
+            updateDashboard();
+        }
+
+        function updatePresetActiveState(selected) {
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.remove('preset-active');
+            });
+            // Find the matching button and add active class
+            const buttons = document.querySelectorAll('.preset-btn');
+            buttons.forEach(btn => {
+                const text = btn.textContent;
+                if ((selected === 'all' && text.includes('All Time')) ||
+                    (selected === 'last12' && text.includes('Last 12')) ||
+                    (text.includes(selected.toString()))) {
+                    btn.classList.add('preset-active');
+                }
+            });
         }
 
         // --- 4. STATE ---
@@ -845,17 +921,24 @@
 
         function updateConvFilter() { // Renamed from onConversationChange
             currentConv = document.getElementById('conv-filter').value;
+            const isOverview = isOverviewMode();
 
             // Show/hide Top Chats section based on mode
             const topChatsSection = document.getElementById('top-chats-section');
-            const reactionSection = document.getElementById('reaction-section');
-
             if (topChatsSection) {
-                topChatsSection.style.display = isOverviewMode() ? 'block' : 'none';
+                topChatsSection.style.display = isOverview ? 'block' : 'none';
             }
-            if (reactionSection) {
-                reactionSection.style.display = isOverviewMode() ? 'none' : 'block';
+
+            // Show/hide Reaction Matrix grid (only in chat mode)
+            const reactionMatrixGrid = document.getElementById('reaction-matrix-grid');
+            if (reactionMatrixGrid) {
+                reactionMatrixGrid.style.display = isOverview ? 'none' : 'block';
             }
+
+            // Make all chart cards full-width in overview mode for better readability
+            document.querySelectorAll('.chart-grid .card').forEach(card => {
+                card.style.gridColumn = isOverview ? '1 / -1' : 'auto';
+            });
 
             updateDashboard();
         }
@@ -881,11 +964,16 @@
                     document.getElementById('end-date').value = dates[dates.length - 1];
                 }
 
-                // Initial visibility: show Top Chats, hide Reaction Matrix
+                // Initial visibility: show Top Chats, hide Reaction Matrix, full-width charts
                 const topChatsSection = document.getElementById('top-chats-section');
-                const reactionSection = document.getElementById('reaction-section');
+                const reactionMatrixGrid = document.getElementById('reaction-matrix-grid');
                 if (topChatsSection) topChatsSection.style.display = 'block';
-                if (reactionSection) reactionSection.style.display = 'none';
+                if (reactionMatrixGrid) reactionMatrixGrid.style.display = 'none';
+
+                // Full-width charts in overview mode
+                document.querySelectorAll('.chart-grid .card').forEach(card => {
+                    card.style.gridColumn = '1 / -1';
+                });
 
                 renderVerbosity();
                 updateDashboard();
@@ -990,10 +1078,10 @@
             renderTimeline();
             renderHeatmap();
             updateEmojiChart();
-            renderTopReactionsChart();
+            renderReactionsGivenReceived();
             renderVerbosity();
 
-            // Only render reactions when viewing a specific chat
+            // Only render reaction matrix when viewing a specific chat
             if (!isOverviewMode()) {
                 renderReactions();
             }
@@ -1153,7 +1241,11 @@
                     gridcolor: 'rgba(255,255,255,0.1)',
                     zeroline: false
                 },
-                yaxis: { autorange: 'reversed', title: '' },
+                yaxis: {
+                    autorange: 'reversed',
+                    title: '',
+                    tickfont: { size: 16 }  // Larger emoji labels
+                },
                 showlegend: false
             }, { responsive: true });
         }
@@ -1212,9 +1304,95 @@
                     gridcolor: 'rgba(255,255,255,0.1)',
                     zeroline: false
                 },
-                yaxis: { autorange: 'reversed', title: '' },
+                yaxis: {
+                    autorange: 'reversed',
+                    title: '',
+                    tickfont: { size: 16 }  // Larger emoji labels
+                },
                 showlegend: false
             }, { responsive: true });
+        }
+
+        function renderReactionsGivenReceived() {
+            // Choose data source: global for overview, per-conv for specific chat
+            let reactionSource = TOP_REACTIONS;
+            if (!isOverviewMode() && TOP_REACTIONS_PER_CONV[currentConv]) {
+                reactionSource = TOP_REACTIONS_PER_CONV[currentConv];
+            }
+
+            if (!reactionSource || reactionSource.length === 0) {
+                showNoData('reactions-given-plot', 'No reaction data');
+                showNoData('reactions-received-plot', 'No reaction data');
+                return;
+            }
+
+            // Reactions YOU gave (where Sender = OWNER_NAME)
+            const givenReactions = reactionSource.filter(r => r.Sender === OWNER_NAME);
+            const givenCounts = {};
+            givenReactions.forEach(item => {
+                givenCounts[item.Emoji] = (givenCounts[item.Emoji] || 0) + item.Count;
+            });
+
+            const givenTop = Object.entries(givenCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            if (givenTop.length > 0) {
+                clearNoData('reactions-given-plot');
+                Plotly.newPlot('reactions-given-plot', [{
+                    x: givenTop.map(d => d[1]),
+                    y: givenTop.map(d => d[0]),
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: {
+                        color: '#bb86fc',
+                        line: { width: 0 }
+                    }
+                }], {
+                    ...chartLayout,
+                    xaxis: { title: 'Times Used' },
+                    yaxis: {
+                        autorange: 'reversed',
+                        tickfont: { size: 18 }
+                    }
+                }, { responsive: true });
+            } else {
+                showNoData('reactions-given-plot', 'No reactions given');
+            }
+
+            // Reactions YOU received (where Sender != OWNER_NAME)
+            const receivedReactions = reactionSource.filter(r => r.Sender !== OWNER_NAME);
+            const receivedCounts = {};
+            receivedReactions.forEach(item => {
+                receivedCounts[item.Emoji] = (receivedCounts[item.Emoji] || 0) + item.Count;
+            });
+
+            const receivedTop = Object.entries(receivedCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            if (receivedTop.length > 0) {
+                clearNoData('reactions-received-plot');
+                Plotly.newPlot('reactions-received-plot', [{
+                    x: receivedTop.map(d => d[1]),
+                    y: receivedTop.map(d => d[0]),
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: {
+                        color: '#03dac6',
+                        line: { width: 0 }
+                    }
+                }], {
+                    ...chartLayout,
+                    xaxis: { title: 'Times Received' },
+                    yaxis: {
+                        autorange: 'reversed',
+                        tickfont: { size: 18 }
+                    }
+                }, { responsive: true });
+            } else {
+                showNoData('reactions-received-plot', 'No reactions received');
+            }
         }
 
         function renderReactions() {
@@ -1255,8 +1433,19 @@
                 hovertemplate: '<b>%{y}</b> reacted to <b>%{x}</b><br>%{z} times<extra></extra>'
             }], {
                 ...chartLayout,
-                xaxis: { title: 'Reacted to Messages By →', side: 'top', tickangle: -45 },
-                yaxis: { title: '← Who Reacted', autorange: 'reversed' }
+                xaxis: {
+                    title: 'Reacted to Messages By →',
+                    side: 'top',
+                    tickangle: -30,
+                    tickfont: { size: 10 },
+                    automargin: true
+                },
+                yaxis: {
+                    title: '← Who Reacted',
+                    autorange: 'reversed',
+                    tickfont: { size: 10 }
+                },
+                margin: { t: 80 }
             }, { responsive: true });
         }
 
@@ -1292,7 +1481,13 @@
                 hovertemplate: '<b>%{x}</b><br>%{y} messages<extra></extra>'
             }], {
                 ...chartLayout,
-                yaxis: { title: 'Messages Sent' }
+                xaxis: {
+                    tickangle: -45,
+                    tickfont: { size: 11 },
+                    automargin: true
+                },
+                yaxis: { title: 'Messages Sent' },
+                margin: { b: 100 }
             }, { responsive: true });
         }
 
