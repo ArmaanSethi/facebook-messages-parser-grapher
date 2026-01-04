@@ -728,35 +728,13 @@
             // Clear existing options except first
             select.innerHTML = '<option value="__overview__">🌐 Overview (All Chats)</option>';
 
-            // Separate DMs and groups
-            const dms = CONVERSATIONS.filter(c => !c.is_group);
-            const groups = CONVERSATIONS.filter(c => c.is_group);
-
-            // Add DMs
-            if (dms.length > 0) {
-                const dmGroup = document.createElement('optgroup');
-                dmGroup.label = '💬 Direct Messages';
-                dms.forEach(conv => {
-                    const opt = document.createElement('option');
-                    opt.value = conv.title;
-                    opt.textContent = `${conv.title} (${conv.message_count.toLocaleString()})`;
-                    dmGroup.appendChild(opt);
-                });
-                select.appendChild(dmGroup);
-            }
-
-            // Add Groups
-            if (groups.length > 0) {
-                const grpGroup = document.createElement('optgroup');
-                grpGroup.label = '👥 Group Chats';
-                groups.forEach(conv => {
-                    const opt = document.createElement('option');
-                    opt.value = conv.title;
-                    opt.textContent = `${conv.title} (${conv.participant_count} people)`;
-                    grpGroup.appendChild(opt);
-                });
-                select.appendChild(grpGroup);
-            }
+            // Add all conversations in one list, sorted by message count
+            CONVERSATIONS.forEach(conv => {
+                const opt = document.createElement('option');
+                opt.value = conv.title;
+                opt.textContent = `${conv.title} (${conv.message_count.toLocaleString()} msgs)`;
+                select.appendChild(opt);
+            });
         }
 
         function renderTopChats() {
@@ -885,6 +863,7 @@
             renderTimeline();
             renderHeatmap();
             updateEmojiChart();
+            renderVerbosity();
 
             // Only render reactions when viewing a specific chat
             if (!isOverviewMode()) {
@@ -1045,14 +1024,25 @@
         }
 
         function renderVerbosity() {
-            const data = RAW_DATA.avg_length || [];
-            if (data.length === 0) {
-                document.getElementById('verbosity-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No verbosity data available</p>';
+            // Compute verbosity from filtered data so it updates with conversation filter
+            if (filteredActivity.length === 0) {
+                document.getElementById('verbosity-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No data for this selection</p>';
                 return;
             }
 
-            const x = data.map(d => d.sender);
-            const y = data.map(d => d.word_count);
+            // Group by sender and sum counts (word_count would need to be in filteredActivity)
+            // For now, just show who sent most messages in current filter
+            const senderCounts = {};
+            filteredActivity.forEach(row => {
+                senderCounts[row.sender] = (senderCounts[row.sender] || 0) + row.count;
+            });
+
+            const sortedSenders = Object.entries(senderCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);  // Top 10
+
+            const x = sortedSenders.map(d => d[0]);
+            const y = sortedSenders.map(d => d[1]);
 
             Plotly.newPlot('verbosity-plot', [{
                 x, y, type: 'bar',
@@ -1060,10 +1050,10 @@
                     color: CHART_COLORS.slice(0, x.length),
                     line: { width: 0 }
                 },
-                hovertemplate: '<b>%{x}</b><br>%{y:.1f} words/message<extra></extra>'
+                hovertemplate: '<b>%{x}</b><br>%{y} messages<extra></extra>'
             }], {
                 ...chartLayout,
-                yaxis: { title: 'Avg Words per Message' }
+                yaxis: { title: 'Messages Sent' }
             }, { responsive: true });
         }
 
