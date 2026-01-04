@@ -994,9 +994,15 @@
             Plotly.newPlot('emoji-plot', traces, {
                 ...chartLayout,
                 barmode: 'group',
-                yaxis: { autorange: 'reversed' },
+                xaxis: {
+                    title: 'Times Used',
+                    showgrid: true,
+                    gridcolor: 'rgba(255,255,255,0.1)',
+                    zeroline: false
+                },
+                yaxis: { autorange: 'reversed', title: '' },
                 showlegend: true,
-                legend: { orientation: 'h', y: -0.15 }
+                legend: { orientation: 'h', y: -0.2 }
             }, { responsive: true });
         }
 
