@@ -626,7 +626,7 @@
             <div id="timeline-plot" class="plotly-graph-div"></div>
         </div>
 
-        <!-- Reactions Grid: Given/Received (always) + Matrix (chat mode only) -->
+        <!-- Reactions Grid: Given/Received + Matrix (chat mode only) -->
         <div class="chart-grid" id="reaction-grid">
             <div class="card" id="reactions-given-card">
                 <h2>🎁 Reactions You Gave</h2>
@@ -638,23 +638,28 @@
                 <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">How others react to your messages</p>
                 <div id="reactions-received-plot" class="plotly-graph-div"></div>
             </div>
-        </div>
-
-        <!-- Reaction Matrix (only in specific chat mode) -->
-        <div class="chart-grid" id="reaction-matrix-grid" style="display: none;">
-            <div class="card" id="reaction-section" style="grid-column: 1 / -1;">
+            <!-- Reaction Matrix: Only visible in chat mode -->
+            <div class="card" id="reaction-section" style="display: none;">
                 <h2>Reaction Matrix</h2>
                 <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Who reacts to whose messages</p>
                 <div id="reaction-plot" class="plotly-graph-div"></div>
             </div>
         </div>
 
-        <div class="chart-grid">
-            <div class="card">
-                <h2>Top Emojis</h2>
-                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Emojis used in messages</p>
-                <div id="emoji-plot" class="plotly-graph-div"></div>
+        <div class="chart-grid" id="emoji-grid">
+            <div class="card" id="emojis-you-card">
+                <h2>😊 Your Top Emojis</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Emojis you use most in messages</p>
+                <div id="emojis-you-plot" class="plotly-graph-div"></div>
             </div>
+            <div class="card" id="emojis-them-card">
+                <h2>💬 Their Top Emojis</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Emojis others use in messages</p>
+                <div id="emojis-them-plot" class="plotly-graph-div"></div>
+            </div>
+        </div>
+
+        <div class="chart-grid">
             <div class="card">
                 <h2>Who's More Verbose?</h2>
                 <div id="verbosity-plot" class="plotly-graph-div"></div>
@@ -929,14 +934,16 @@
                 topChatsSection.style.display = isOverview ? 'block' : 'none';
             }
 
-            // Show/hide Reaction Matrix grid (only in chat mode)
-            const reactionMatrixGrid = document.getElementById('reaction-matrix-grid');
-            if (reactionMatrixGrid) {
-                reactionMatrixGrid.style.display = isOverview ? 'none' : 'block';
+            // Show/hide Reaction Matrix card (only in chat mode)
+            const reactionSection = document.getElementById('reaction-section');
+            if (reactionSection) {
+                reactionSection.style.display = isOverview ? 'none' : 'block';
             }
 
             // Make all chart cards full-width in overview mode for better readability
             document.querySelectorAll('.chart-grid .card').forEach(card => {
+                // Skip hidden cards
+                if (card.style.display === 'none') return;
                 card.style.gridColumn = isOverview ? '1 / -1' : 'auto';
             });
 
@@ -1190,51 +1197,54 @@
         }
 
         function updateEmojiChart() {
-            const topN = parseInt(document.getElementById('top-n').value) || 10;
-
             // Choose data source based on current filter
             const emojiSource = (!isOverviewMode() && EMOJI_PER_CONV[currentConv]) ? EMOJI_PER_CONV[currentConv] : EMOJI_DATA;
 
             if (!emojiSource || emojiSource.length === 0) {
-                showNoData('emoji-plot', 'No emoji data for this selection');
+                showNoData('emojis-you-plot', 'No emoji data');
+                showNoData('emojis-them-plot', 'No emoji data');
                 return;
             }
 
-            clearNoData('emoji-plot');
+            // YOUR emojis (where Sender = OWNER_NAME)
+            const yourEmojis = emojiSource.filter(e => e.Sender === OWNER_NAME);
+            renderEmojiChart('emojis-you-plot', yourEmojis, '#bb86fc');
 
-            const globalCounts = {};
-            emojiSource.forEach(item => {
-                globalCounts[item.Emoji] = (globalCounts[item.Emoji] || 0) + item.Count;
-            });
+            // THEIR emojis (where Sender != OWNER_NAME)
+            const theirEmojis = emojiSource.filter(e => e.Sender !== OWNER_NAME);
+            renderEmojiChart('emojis-them-plot', theirEmojis, '#03dac6');
+        }
 
-            const topEmojis = Object.entries(globalCounts)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, topN)
-                .map(e => e[0]);
-
-            const filtered = emojiSource.filter(item => topEmojis.includes(item.Emoji));
-            filtered.sort((a, b) => b.Count - a.Count);
-
-            const grouped = _.groupBy(filtered, 'Sender');
-            const traces = [];
-            let colorIdx = 0;
-
-            for (const sender in grouped) {
-                traces.push({
-                    x: grouped[sender].map(i => i.Count),
-                    y: grouped[sender].map(i => i.Emoji),
-                    orientation: 'h', name: sender, type: 'bar',
-                    marker: {
-                        color: CHART_COLORS[colorIdx % CHART_COLORS.length],
-                        line: { width: 0 }
-                    }
-                });
-                colorIdx++;
+        function renderEmojiChart(plotId, emojiData, color) {
+            if (!emojiData || emojiData.length === 0) {
+                showNoData(plotId, 'No emoji data');
+                return;
             }
 
-            Plotly.newPlot('emoji-plot', traces, {
+            clearNoData(plotId);
+
+            // Aggregate counts per emoji
+            const emojiCounts = {};
+            emojiData.forEach(item => {
+                emojiCounts[item.Emoji] = (emojiCounts[item.Emoji] || 0) + item.Count;
+            });
+
+            const topEmojis = Object.entries(emojiCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);  // Top 5 for clean look
+
+            Plotly.newPlot(plotId, [{
+                x: topEmojis.map(d => d[1]),
+                y: topEmojis.map(d => d[0]),
+                type: 'bar',
+                orientation: 'h',
+                marker: {
+                    color: color,
+                    line: { width: 0 }
+                },
+                hovertemplate: '%{y}: %{x} times<extra></extra>'
+            }], {
                 ...chartLayout,
-                barmode: 'group',
                 xaxis: {
                     title: 'Times Used',
                     showgrid: true,
@@ -1244,7 +1254,7 @@
                 yaxis: {
                     autorange: 'reversed',
                     title: '',
-                    tickfont: { size: 16 }  // Larger emoji labels
+                    tickfont: { size: 22 }  // Large emoji labels
                 },
                 showlegend: false
             }, { responsive: true });
