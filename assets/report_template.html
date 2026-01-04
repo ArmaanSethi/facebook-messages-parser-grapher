@@ -119,25 +119,42 @@
 
         /* Glassmorphism Cards */
         .card {
-            background: rgba(30, 30, 46, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 24px;
+            background: rgba(40, 40, 60, 0.4);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow:
-                0 8px 32px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.05);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            overflow: visible;
+            /* Allow tooltips and legends to overflow slightly if needed */
         }
 
         .card:hover {
-            transform: translateY(-8px) scale(1.01);
+            transform: translateY(-8px);
             border-color: rgba(187, 134, 252, 0.3);
-            box-shadow:
-                0 20px 60px rgba(187, 134, 252, 0.15),
-                0 8px 32px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+        }
+
+        .no-data {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            color: #888;
+            font-size: 0.95rem;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+            pointer-events: none;
+            backdrop-filter: blur(5px);
         }
 
         /* Control Bar */
@@ -265,9 +282,9 @@
         /* Chart Container */
         .plotly-graph-div {
             width: 100%;
-            height: 450px;
+            height: 400px;
             border-radius: 12px;
-            overflow: hidden;
+            position: relative;
         }
 
         .chart-grid {
@@ -309,21 +326,24 @@
         }
 
         .story-card {
-            width: 200px;
-            min-width: 200px;
-            height: 360px;
-            border-radius: 24px;
+            width: 240px;
+            min-width: 240px;
+            height: 480px;
+            border-radius: 32px;
             position: relative;
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            padding: 24px;
             text-align: center;
-            padding: 30px;
-            color: #fff;
-            overflow: hidden;
+            color: white;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 10px;
         }
 
         .story-card::before {
@@ -526,7 +546,7 @@
         <div class="controls">
             <div class="control-group" style="flex: 2;">
                 <label>📍 Conversation</label>
-                <select id="conv-filter" onchange="onConversationChange()">
+                <select id="conv-filter" onchange="updateConvFilter()">
                     <option value="__overview__">🌐 Overview (All Chats)</option>
                 </select>
             </div>
@@ -670,6 +690,7 @@
 
     <script>
         // --- 1. DATA INJECTION ---
+        const OWNER_NAME = "{{ owner_name }}";
         const RAW_DATA = {{ frontend_data_json | safe }};
         const EMOJI_DATA = {{ emoji_raw_json | safe }};
         const EMOJI_PER_CONV = {{ emoji_per_conv_json | safe }};
@@ -789,7 +810,7 @@
                 document.getElementById('start-date').value = dates[0];
                 document.getElementById('end-date').value = dates[dates.length - 1];
             }
-            updateDashboard();
+            updateConvFilter(); // Use updateConvFilter to properly restore Overview mode
         }
 
         // --- 4. STATE ---
@@ -937,7 +958,7 @@
                 // Filter for owner
                 const myReactions = topRxnData.filter(x => x.Sender === OWNER_NAME);
                 if (myReactions.length > 0) {
-                    // Sort by count desc
+                    // Sort by count desc - ensure we use .Count property
                     myReactions.sort((a, b) => b.Count - a.Count);
                     vibeEmoji = myReactions[0].Emoji;
                 }
@@ -980,15 +1001,36 @@
 
         // --- 7. CHARTS ---
         const chartLayout = {
-            template: 'plotly_dark',
+            font: { family: 'Inter, sans-serif', color: '#e0e0e0' },
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'rgba(0,0,0,0)',
-            font: { family: 'Inter, sans-serif', color: '#aaa' },
-            margin: { t: 40, l: 120, r: 20, b: 50 },
+            margin: { t: 30, l: 80, r: 20, b: 40 },
+            showlegend: false,
             hoverlabel: { bgcolor: '#1e1e2e', bordercolor: '#bb86fc', font: { family: 'Inter' } }
         };
 
+        function showNoData(containerId, message) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            // Clear existing Plotly chart if any
+            Plotly.purge(container);
+            container.innerHTML = `<div class="no-data">${message}</div>`;
+        }
+
+        function clearNoData(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const noData = container.querySelector('.no-data');
+            if (noData) noData.remove();
+        }
+
         function renderTimeline() {
+            if (filteredActivity.length === 0) {
+                showNoData('timeline-plot', 'No message data for this selection');
+                return;
+            }
+            clearNoData('timeline-plot');
+
             const grouped = _.groupBy(filteredActivity, r => r.sender);
             const traces = [];
             let colorIdx = 0;
@@ -1016,6 +1058,12 @@
         }
 
         function renderHeatmap() {
+            if (filteredActivity.length === 0) {
+                showNoData('heatmap-plot', 'No message data for this selection');
+                return;
+            }
+            clearNoData('heatmap-plot');
+
             const agg = {};
             filteredActivity.forEach(row => {
                 const key = row.weekday + '-' + row.hour;
@@ -1057,15 +1105,14 @@
             const topN = parseInt(document.getElementById('top-n').value) || 10;
 
             // Choose data source based on current filter
-            let emojiSource = EMOJI_DATA;
-            if (!isOverviewMode() && EMOJI_PER_CONV[currentConv]) {
-                emojiSource = EMOJI_PER_CONV[currentConv];
-            }
+            const emojiSource = (!isOverviewMode() && EMOJI_PER_CONV[currentConv]) ? EMOJI_PER_CONV[currentConv] : EMOJI_DATA;
 
             if (!emojiSource || emojiSource.length === 0) {
-                document.getElementById('emoji-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No emoji data for this selection</p>';
+                showNoData('emoji-plot', 'No emoji data for this selection');
                 return;
             }
+
+            clearNoData('emoji-plot');
 
             const globalCounts = {};
             emojiSource.forEach(item => {
@@ -1107,8 +1154,7 @@
                     zeroline: false
                 },
                 yaxis: { autorange: 'reversed', title: '' },
-                showlegend: true,
-                legend: { orientation: 'h', y: -0.2 }
+                showlegend: false
             }, { responsive: true });
         }
 
@@ -1120,9 +1166,11 @@
             }
 
             if (!reactionSource || reactionSource.length === 0) {
-                document.getElementById('reactions-emoji-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No reaction data for this selection</p>';
+                showNoData('reactions-emoji-plot', 'No reaction data for this selection');
                 return;
             }
+
+            clearNoData('reactions-emoji-plot');
 
             // Aggregate counts per emoji
             const emojiCounts = {};
@@ -1165,8 +1213,7 @@
                     zeroline: false
                 },
                 yaxis: { autorange: 'reversed', title: '' },
-                showlegend: true,
-                legend: { orientation: 'h', y: -0.2 }
+                showlegend: false
             }, { responsive: true });
         }
 
@@ -1175,7 +1222,7 @@
             const reactionData = getActiveReactionData();
 
             if (!reactionData) {
-                document.getElementById('reaction-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">Select a specific chat to see the reaction matrix</p>';
+                showNoData('reaction-plot', 'Select a specific chat to see the reaction matrix');
                 return;
             }
 
@@ -1183,9 +1230,11 @@
             const targets = _.uniq(_.flatten(Object.values(reactionData).map(Object.keys)));
 
             if (reactors.length === 0) {
-                document.getElementById('reaction-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No reaction data for this chat</p>';
+                showNoData('reaction-plot', 'No reaction data for this chat');
                 return;
             }
+
+            clearNoData('reaction-plot');
 
             const z = reactors.map(reactor => {
                 return targets.map(target => reactionData[reactor][target] || 0);
@@ -1214,9 +1263,11 @@
         function renderVerbosity() {
             // Compute verbosity from filtered data so it updates with conversation filter
             if (filteredActivity.length === 0) {
-                document.getElementById('verbosity-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No data for this selection</p>';
+                showNoData('verbosity-plot', 'No data for this selection');
                 return;
             }
+
+            clearNoData('verbosity-plot');
 
             // Group by sender and sum counts (word_count would need to be in filteredActivity)
             // For now, just show who sent most messages in current filter
