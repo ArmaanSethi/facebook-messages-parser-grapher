@@ -555,11 +555,15 @@
         <div class="grid-stats">
             <div class="card stat-card">
                 <div class="stat-value" id="stat-total">0</div>
-                <div class="stat-label">Messages Exchanged</div>
+                <div class="stat-label" id="stat-total-label">Messages Exchanged</div>
             </div>
             <div class="card stat-card">
                 <div class="stat-value" id="stat-days">0</div>
-                <div class="stat-label">Days Connected</div>
+                <div class="stat-label" id="stat-days-label">Days Connected</div>
+            </div>
+            <div class="card stat-card" id="stat-convs-card">
+                <div class="stat-value" id="stat-convs">0</div>
+                <div class="stat-label">Conversations</div>
             </div>
         </div>
 
@@ -620,21 +624,21 @@
                     <div class="story-badge"><span class="dynamic-year">2024</span></div>
                 </div>
 
-                <!-- Card 2: Top Emoji -->
+                <!-- Card 2: Your Vibe -->
                 <div class="story-card theme-teal">
                     <div class="story-icon">🎭</div>
                     <div class="story-title">Your Vibe</div>
                     <div class="story-stat" id="card-emoji">?</div>
-                    <div class="story-sub">Most Used Emoji</div>
+                    <div class="story-sub">Your Go-To Reaction</div>
                     <div class="story-badge"><span class="dynamic-year">2024</span></div>
                 </div>
 
-                <!-- Card 3: Days Active -->
+                <!-- Card 3: The Balance -->
                 <div class="story-card theme-pink">
-                    <div class="story-icon">🔥</div>
-                    <div class="story-title">BFF Status</div>
-                    <div class="story-stat" id="card-days">0</div>
-                    <div class="story-sub">Days Connected</div>
+                    <div class="story-icon">⚖️</div>
+                    <div class="story-title">The Balance</div>
+                    <div class="story-stat" id="card-balance">50%</div>
+                    <div class="story-sub">You Sent</div>
                     <div class="story-badge"><span class="dynamic-year">2024</span></div>
                 </div>
 
@@ -647,12 +651,12 @@
                     <div class="story-badge"><span class="dynamic-year">2024</span></div>
                 </div>
 
-                <!-- Card 5: Streak -->
+                <!-- Card 5: Longest Streak -->
                 <div class="story-card theme-gold">
-                    <div class="story-icon">⚡</div>
+                    <div class="story-icon">🔥</div>
                     <div class="story-title">On Fire</div>
-                    <div class="story-stat" id="card-streak">?</div>
-                    <div class="story-sub">Average Per Day</div>
+                    <div class="story-stat" id="card-streak">0</div>
+                    <div class="story-sub">Longest Streak (Days)</div>
                     <div class="story-badge"><span class="dynamic-year">2024</span></div>
                 </div>
             </div>
@@ -722,21 +726,47 @@
         let filteredActivity = [];
         let currentConv = '__overview__';  // Current conversation filter
 
-        // --- 4.1 CONVERSATION FILTER LOGIC ---
-        function getActiveReactionData() {
-            if (currentConv === '__overview__') {
-                return null;  // Don't show reaction matrix in overview
-            }
-            // Return per-conv data only, don't fall back to global
-            return REACTION_PER_CONV[currentConv] || null;
+        function calculateStreak(data) {
+            // Extract unique dates where messages were sent
+            const dates = [...new Set(data.map(d => d.date))].sort();
+            if (dates.length === 0) return 0;
+
+            let maxStreak = 0;
+            let currentStreak = 0;
+            let lastDate = null;
+
+            dates.forEach(dateStr => {
+                const currentDate = new Date(dateStr);
+                if (!lastDate) {
+                    currentStreak = 1;
+                } else {
+                    const diffTime = Math.abs(currentDate - lastDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays === 1) {
+                        currentStreak++;
+                    } else {
+                        currentStreak = 1;
+                    }
+                }
+                if (currentStreak > maxStreak) maxStreak = currentStreak;
+                lastDate = currentDate;
+            });
+            return maxStreak;
         }
 
         function isOverviewMode() {
             return currentConv === '__overview__';
         }
 
+        function getActiveReactionData() {
+            if (currentConv === '__overview__') {
+                return null;
+            }
+            return REACTION_PER_CONV[currentConv] || null;
+        }
+
         function populateConversationDropdown() {
-            const select = document.getElementById('conv-filter');
+            const select = document.getElementById('conv-filter'); // Keep original ID for now
             if (!select || !CONVERSATIONS.length) return;
 
             // Clear existing options except first
@@ -751,6 +781,21 @@
             });
         }
 
+        function resetFilters() {
+            document.getElementById('conv-filter').value = '__overview__'; // Use conv-filter
+            currentConv = '__overview__';
+            if (RAW_DATA.detailed_activity.length > 0) {
+                const dates = RAW_DATA.detailed_activity.map(d => d.date).sort();
+                document.getElementById('start-date').value = dates[0];
+                document.getElementById('end-date').value = dates[dates.length - 1];
+            }
+            updateDashboard();
+        }
+
+        // --- 4. STATE ---
+        // (Variables declared above: filteredActivity, currentConv)
+
+        // --- 4.1 CONVERSATION FILTER LOGIC ---
         function renderTopChats() {
             const container = document.getElementById('top-chats-list');
             if (!container) return;
@@ -762,9 +807,11 @@
                 return `
                     <div style="display: flex; align-items: center; padding: 12px 16px; background: rgba(255,255,255,0.05); border-radius: 10px; cursor: pointer;" 
                          onclick="selectConversation('${conv.title.replace(/'/g, "\\'")}')">
-                        <span style="font-size: 1.5rem; margin-right: 12px;">${medal}</span>
-                        <span style="flex: 1; font-weight: 600;">${type} ${conv.title}</span>
-                        <span style="color: #03dac6; font-weight: 700;">${conv.message_count.toLocaleString()}</span>
+                        <div style="font-size: 1.5rem; margin-right: 12px;">${medal}</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${conv.title}</div>
+                            <div style="font-size: 0.8rem; color: #888;">${type} ${conv.message_count.toLocaleString()} msgs</div>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -772,10 +819,10 @@
 
         function selectConversation(title) {
             document.getElementById('conv-filter').value = title;
-            onConversationChange();
+            updateConvFilter(); // Renamed from onConversationChange
         }
 
-        function onConversationChange() {
+        function updateConvFilter() { // Renamed from onConversationChange
             currentConv = document.getElementById('conv-filter').value;
 
             // Show/hide Top Chats section based on mode
@@ -842,24 +889,69 @@
 
             const totalMsgs = _.sumBy(filteredActivity, 'count');
             const uniqueDays = _.uniqBy(filteredActivity, 'date').length;
-            const avgPerDay = uniqueDays > 0 ? Math.round(totalMsgs / uniqueDays) : 0;
+            const streak = calculateStreak(filteredActivity);
+
+            // Calculate Message Balance (You vs Them)
+            let myMsgs = 0;
+            filteredActivity.forEach(row => {
+                if (row.sender === OWNER_NAME) myMsgs += row.count;
+            });
+            const myPercent = totalMsgs > 0 ? Math.round((myMsgs / totalMsgs) * 100) : 0;
 
             // Animate stats
             animateValue(document.getElementById('stat-total'), 0, totalMsgs, 1500);
             animateValue(document.getElementById('stat-days'), 0, uniqueDays, 1200);
 
+            // Show/hide conversation count based on mode
+            const convsCard = document.getElementById('stat-convs-card');
+            if (isOverviewMode()) {
+                convsCard.style.display = 'block';
+                document.getElementById('stat-convs').innerText = CONVERSATIONS.length;
+                document.getElementById('stat-total-label').innerText = 'Total Messages';
+                document.getElementById('stat-days-label').innerText = 'Days Active';
+            } else {
+                convsCard.style.display = 'none';
+                document.getElementById('stat-total-label').innerText = 'Messages Together';
+                document.getElementById('stat-days-label').innerText = 'Days Connected';
+            }
+
             // Update Social Cards
             document.getElementById('card-total').innerText = (totalMsgs > 1000) ? (totalMsgs / 1000).toFixed(1) + 'k' : totalMsgs;
-            document.getElementById('card-days').innerText = uniqueDays;
-            document.getElementById('card-streak').innerText = avgPerDay;
+            document.getElementById('card-balance').innerText = myPercent + '%';
+            document.getElementById('card-streak').innerText = streak;
 
-            // Find Top Emoji
-            if (EMOJI_DATA.length > 0) {
+            // Find Top Reaction (Your Vibe)
+            // If viewing a specific conv, show YOUR top reaction. In overview, show global top emoji or reaction?
+            // "Your Vibe" implies what YOU do. 
+            // We have TOP_REACTIONS which is {Sender: [{Emoji, Count}]}
+
+            let vibeEmoji = '?';
+            // Get proper reaction source
+            const topRxnData = (!isOverviewMode() && TOP_REACTIONS_PER_CONV[currentConv])
+                ? TOP_REACTIONS_PER_CONV[currentConv]
+                : TOP_REACTIONS;
+
+            // Find OWNER'S top reaction in this data
+            if (topRxnData && OWNER_NAME) {
+                // topRxnData is array of {Sender, Emoji, Count}
+                // Filter for owner
+                const myReactions = topRxnData.filter(x => x.Sender === OWNER_NAME);
+                if (myReactions.length > 0) {
+                    // Sort by count desc
+                    myReactions.sort((a, b) => b.Count - a.Count);
+                    vibeEmoji = myReactions[0].Emoji;
+                }
+            }
+            // Fallback if no reactions found (or no owner match), maybe show top overall emoji?
+            if (vibeEmoji === '?' && EMOJI_DATA.length > 0) {
+                // Just pick top used emoji overall
                 const counts = {};
                 EMOJI_DATA.forEach(i => counts[i.Emoji] = (counts[i.Emoji] || 0) + i.Count);
                 const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-                document.getElementById('card-emoji').innerText = sorted[0] ? sorted[0][0] : '?';
+                if (sorted[0]) vibeEmoji = sorted[0][0];
             }
+
+            document.getElementById('card-emoji').innerText = vibeEmoji;
 
             // Find Peak Hour
             const hourCounts = {};

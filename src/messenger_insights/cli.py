@@ -118,6 +118,7 @@ def analyze(
         
         stats_dict = {
             "title": f"Report for {my_name}",
+            "owner_name": my_name,
             "top_emoji": top_emoji_display,
             # Pass Raw JSONs as strings
             "frontend_data_json": json.dumps(frontend_data),
