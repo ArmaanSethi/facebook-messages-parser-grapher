@@ -1037,9 +1037,14 @@
                     [0.5, '#cf6679'],
                     [1, '#ffb74d']
                 ],
-                showscale: false,
+                showscale: true,
+                colorbar: { title: 'Reactions', len: 0.5 },
                 hovertemplate: '<b>%{y}</b> reacted to <b>%{x}</b><br>%{z} times<extra></extra>'
-            }], chartLayout, { responsive: true });
+            }], {
+                ...chartLayout,
+                xaxis: { title: 'Reacted to Messages By →', side: 'top', tickangle: -45 },
+                yaxis: { title: '← Who Reacted', autorange: 'reversed' }
+            }, { responsive: true });
         }
 
         function renderVerbosity() {
