@@ -68,7 +68,8 @@ def analyze(
         # 3. Analyze
         stats = analytics.calculate_response_times(df, my_name=my_name)
         init_rate = analytics.calculate_initiation_rate(df, my_name=my_name)
-        emoji_counts = analytics.extract_top_emojis(df, top_n=5)
+        emoji_data = analytics.extract_top_emojis(df, top_n=5)
+        global_emoji_counts = emoji_data.get('global', {})
             
         # Print Summary Table
         table = Table(title="Messenger Insights V2")
@@ -81,7 +82,7 @@ def analyze(
         table.add_row("My Initiation Rate", f"{init_rate.get('my_initiation_pct', 'N/A')}%")
         
         # Add Emoji Rows
-        for sender, counts in emoji_counts.items():
+        for sender, counts in global_emoji_counts.items():
             top_emoji = f"{counts[0][0]} ({counts[0][1]})" if counts else "None"
             table.add_row(f"{sender}'s Top Emoji", top_emoji)
         
@@ -95,11 +96,15 @@ def analyze(
         # Prepare Data for Interactive Frontend
         # reaction_map contains 'global' and 'per_conv' 
         frontend_data = proc.prepare_frontend_data(df)
-        emoji_raw = viz.get_emoji_data(emoji_counts)
+        emoji_raw = viz.get_emoji_data(global_emoji_counts)
+        emoji_per_conv = {
+            conv: viz.get_emoji_data(sender_counts) 
+            for conv, sender_counts in emoji_data.get('per_conv', {}).items()
+        }
         
         # Determine top emoji string
         top_emoji_display = "None"
-        for sender, counts in emoji_counts.items():
+        for sender, counts in global_emoji_counts.items():
              if counts:
                  top_emoji_display = counts[0][0]
                  break 
@@ -110,6 +115,7 @@ def analyze(
             # Pass Raw JSONs as strings
             "frontend_data_json": json.dumps(frontend_data),
             "emoji_raw_json": json.dumps(emoji_raw),
+            "emoji_per_conv_json": json.dumps(emoji_per_conv),
             "reaction_raw_json": json.dumps(reaction_map.get('global', {})),
             "reaction_per_conv_json": json.dumps(reaction_map.get('per_conv', {}))
         }

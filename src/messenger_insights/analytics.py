@@ -6,28 +6,38 @@ from collections import Counter
 class MessageAnalytics:
     """Calculates advanced metrics for conversation DataFrames."""
     
-    def extract_top_emojis(self, df: pd.DataFrame, top_n: int = 10) -> Dict[str, List[tuple]]:
-        """Finds most used emojis per sender."""
+    def extract_top_emojis(self, df: pd.DataFrame, top_n: int = 10) -> Dict[str, Any]:
+        """Finds most used emojis per sender, with per-conversation breakdown.
+        
+        Returns:
+            Dict with 'global' (sender -> emoji counts) and 'per_conv' (conv_title -> sender -> emoji counts)
+        """
         if df.empty or 'content' not in df.columns:
-            return {}
+            return {'global': {}, 'per_conv': {}}
             
-        emoji_counts = {}
+        global_counts = {}
+        per_conv_counts = {}
         
-        # Filter strictly for messages with content
-        # Note: We rely on the 'emoji' library to extract
+        # Global emoji counts per sender
         senders = df['sender'].unique()
-        
         for sender in senders:
             sender_msgs = df[df['sender'] == sender]['content'].dropna()
             all_text = " ".join(sender_msgs.astype(str))
-            
-            # Extract all emojis
             emojis_list = [c['emoji'] for c in emoji.emoji_list(all_text)]
+            global_counts[sender] = Counter(emojis_list).most_common(top_n)
+        
+        # Per-conversation emoji counts
+        if 'conv_title' in df.columns:
+            for conv_title in df['conv_title'].unique():
+                conv_df = df[df['conv_title'] == conv_title]
+                per_conv_counts[conv_title] = {}
+                for sender in conv_df['sender'].unique():
+                    sender_msgs = conv_df[conv_df['sender'] == sender]['content'].dropna()
+                    all_text = " ".join(sender_msgs.astype(str))
+                    emojis_list = [c['emoji'] for c in emoji.emoji_list(all_text)]
+                    per_conv_counts[conv_title][sender] = Counter(emojis_list).most_common(top_n)
             
-            # Count
-            emoji_counts[sender] = Counter(emojis_list).most_common(top_n)
-            
-        return emoji_counts
+        return {'global': global_counts, 'per_conv': per_conv_counts}
 
     def analyze_reactions(self, messages_stream: List[Dict]) -> Dict[str, Any]:
         """Parses raw message stream to find who reacts to whom.

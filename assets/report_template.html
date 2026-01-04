@@ -658,6 +658,7 @@
         // --- 1. DATA INJECTION ---
         const RAW_DATA = {{ frontend_data_json | safe }};
         const EMOJI_DATA = {{ emoji_raw_json | safe }};
+        const EMOJI_PER_CONV = {{ emoji_per_conv_json | safe }};
         const REACTION_DATA = {{ reaction_raw_json | safe }};
         const REACTION_PER_CONV = {{ reaction_per_conv_json | safe }};
         const SENDER_COLORS = RAW_DATA.sender_colors;
@@ -948,8 +949,20 @@
 
         function updateEmojiChart() {
             const topN = parseInt(document.getElementById('top-n').value) || 10;
+
+            // Choose data source based on current filter
+            let emojiSource = EMOJI_DATA;
+            if (!isOverviewMode() && EMOJI_PER_CONV[currentConv]) {
+                emojiSource = EMOJI_PER_CONV[currentConv];
+            }
+
+            if (!emojiSource || emojiSource.length === 0) {
+                document.getElementById('emoji-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No emoji data for this selection</p>';
+                return;
+            }
+
             const globalCounts = {};
-            EMOJI_DATA.forEach(item => {
+            emojiSource.forEach(item => {
                 globalCounts[item.Emoji] = (globalCounts[item.Emoji] || 0) + item.Count;
             });
 
@@ -958,7 +971,7 @@
                 .slice(0, topN)
                 .map(e => e[0]);
 
-            const filtered = EMOJI_DATA.filter(item => topEmojis.includes(item.Emoji));
+            const filtered = emojiSource.filter(item => topEmojis.includes(item.Emoji));
             filtered.sort((a, b) => b.Count - a.Count);
 
             const grouped = _.groupBy(filtered, 'Sender');
