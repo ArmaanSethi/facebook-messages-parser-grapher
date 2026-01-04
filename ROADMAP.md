@@ -126,3 +126,56 @@ We spend half our lives digital. This tool gives you a mirror to see who you are
 - [ ] **Unit Tests**: Coverage is good, but need more edge cases for corrupt JSONs.
 - [ ] **Performance**: Optimize `pandas` memory usage for 50GB+ ultra-massive datasets (maybe switch to `polars`?).
 - [ ] **UI Themes**: Allow user to toggle between "Cyberpunk", "Light Mode", "Paper", and "Terminal".
+
+---
+
+## ⚡ Scalability Optimization (v3.0 Priority)
+
+### The Problem
+Currently, **all data is embedded directly in the HTML report**. For a typical export (~3,700 messages), this produces a ~200KB file that loads instantly. However, for power users with **10+ years of chat history** (100k+ messages), this approach has issues:
+
+| Messages | Estimated Report Size | Load Time | Memory Usage |
+|----------|----------------------|-----------|--------------|
+| 3,700 | 200 KB | Instant | 10 MB |
+| 50,000 | ~3 MB | 1-2 sec | 50 MB |
+| 500,000 | ~30 MB | 5-10 sec | 200+ MB |
+| 1,000,000+ | 60+ MB | 15+ sec | 500+ MB (browser may lag) |
+
+### The Solution: On-Demand Data Loading
+
+**Phase 1: Split Data from Template**
+```
+output/
+├── report.html           # Lightweight shell (~50KB)
+├── data/
+│   ├── metadata.json     # Conversation list, basic stats
+│   ├── timeline.json     # Pre-aggregated daily counts
+│   ├── convs/
+│   │   ├── alice.json    # Per-conversation activity data
+│   │   ├── bob.json
+│   │   └── group_chat.json
+│   └── emojis/
+│       ├── _global.json  # Global emoji counts
+│       └── alice.json    # Per-conversation emoji data
+```
+
+**Phase 2: Lazy Loading in Frontend**
+- On page load: Fetch only `metadata.json` and render dropdown
+- On conversation select: `fetch('/data/convs/${convTitle}.json')`
+- Charts render from fetched data, no redundant loading
+
+**Phase 3: Streaming Aggregation**
+- For 1M+ message datasets, pre-aggregate in Python (hourly buckets, top emojis only)
+- Never load raw messages into browser memory
+
+### Trade-offs
+| Approach | Pros | Cons |
+|----------|------|------|
+| **Current (Single HTML)** | Works offline, single file to share | Large files for big datasets |
+| **Split + Fetch** | Scalable, fast initial load | Requires local server or file:// CORS workaround |
+| **WebSocket Streaming** | Real-time updates, lowest memory | Complex, server dependency |
+
+### Recommended Path
+1. **Short-term**: Add `--large` CLI flag that uses split data approach
+2. **Medium-term**: Default to split data, bundle local Python server for viewing
+3. **Long-term**: WebAssembly-based pandas for in-browser aggregation (no server)
