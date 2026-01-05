@@ -376,6 +376,7 @@
             background: inherit;
             filter: blur(0);
             z-index: -1;
+            border-radius: inherit;
         }
 
         .story-card:hover {
@@ -679,9 +680,10 @@
             </div>
             <div class="card" id="streak-card">
                 <h2>⚡️ Conversation Streaks</h2>
-                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Longest chain of consecutive days with
-                    messages</p>
-                <div id="streak-plot" class="plotly-graph-div"></div>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Daily activity calendar</p>
+                <div id="streak-stat" style="font-size: 2rem; font-weight: bold; color: #FFD740; margin-bottom: 15px;">0
+                    Days</div>
+                <div id="streak-calendar" style="overflow-x: auto; padding-bottom: 10px;"></div>
             </div>
         </div>
 
@@ -1185,6 +1187,10 @@
         }
 
         function renderStreakChart() {
+            // Get date filter values from DOM
+            const dateStart = document.getElementById('start-date')?.value || null;
+            const dateEnd = document.getElementById('end-date')?.value || null;
+
             // Get data source based on current filter
             // Use detailed activity which has date-level granularity
             let activitySource = RAW_DATA.detailed_activity;
@@ -1193,35 +1199,45 @@
                 activitySource = activitySource.filter(a => a.conv_title === currentConv);
             }
 
-            if (!activitySource || activitySource.length === 0) {
-                showNoData('streak-plot', 'No message data to calculate streaks');
+            const calendarEl = document.getElementById('streak-calendar');
+            const statEl = document.getElementById('streak-stat');
+
+            // Count messages per date (filtered by date range)
+            const dateCounts = {};
+            activitySource.forEach(a => {
+                // Apply date filter
+                if (dateStart && a.date < dateStart) return;
+                if (dateEnd && a.date > dateEnd) return;
+                dateCounts[a.date] = (dateCounts[a.date] || 0) + (a.count || 1);
+            });
+
+            const dates = Object.keys(dateCounts).sort();
+
+            // Determine calendar range from filter or data
+            let calendarStart, calendarEnd;
+            if (dateStart && dateEnd) {
+                // Use filter range
+                calendarStart = new Date(dateStart);
+                calendarEnd = new Date(dateEnd);
+            } else if (dates.length > 0) {
+                // Use data range
+                calendarStart = new Date(dates[0]);
+                calendarEnd = new Date(dates[dates.length - 1]);
+            } else {
+                calendarEl.innerHTML = '<p style="color: #888; text-align: center;">No message data for this selection</p>';
+                statEl.textContent = '0 Days';
                 return;
             }
 
-            // Extract unique dates with messages
-            const activeDates = [...new Set(activitySource.map(a => a.date))].sort();
-
-            if (activeDates.length === 0) {
-                showNoData('streak-plot', 'No active days found');
-                return;
-            }
-
-            // Calculate streaks
-            let currentStreak = 0;
+            // Calculate longest streak from filtered dates
+            const oneDay = 24 * 60 * 60 * 1000;
             let longestStreak = 0;
             let tempStreak = 0;
             let lastDate = null;
 
-            // Parse dates to track consecutive days
-            // We'll use timestamps for reliable day difference calc
-            const oneDay = 24 * 60 * 60 * 1000;
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            // Iterate through sorted dates
-            activeDates.forEach((dateStr, index) => {
+            dates.forEach((dateStr, index) => {
                 const currentDate = new Date(dateStr);
-                currentDate.setHours(0, 0, 0, 0); // normalize time
+                currentDate.setHours(0, 0, 0, 0);
 
                 if (index === 0) {
                     tempStreak = 1;
@@ -1230,41 +1246,108 @@
                     if (diffDays === 1) {
                         tempStreak++;
                     } else {
-                        // streak broken
                         longestStreak = Math.max(longestStreak, tempStreak);
                         tempStreak = 1;
                     }
                 }
                 lastDate = currentDate;
             });
-
-            // Check final temp streak
             longestStreak = Math.max(longestStreak, tempStreak);
+            statEl.textContent = dates.length > 0 ? `🔥 ${longestStreak} Day Streak` : '0 Days';
 
-            clearNoData('streak-plot');
+            // Build GitHub-style calendar using the full filter range
+            const maxCount = Object.keys(dateCounts).length > 0 ? Math.max(...Object.values(dateCounts)) : 1;
 
-            // Visualization: Indicator for Longest Streak
-            Plotly.newPlot('streak-plot', [
-                {
-                    type: 'indicator',
-                    mode: 'number+delta',
-                    value: longestStreak,
-                    title: {
-                        text: "Longest Daily Streak",
-                        font: { size: 24, color: '#888' }
-                    },
-                    number: {
-                        suffix: " Days",
-                        font: { size: 50, color: '#FFD740' }
-                    },
-                    domain: { x: [0, 1], y: [0, 1] }
+            // Generate weeks from calendarStart to calendarEnd
+            const startDate = new Date(calendarStart);
+            startDate.setDate(startDate.getDate() - startDate.getDay()); // Start from Sunday
+
+            const boxSize = 14; // Size of each day box
+            const gap = 3; // Gap between boxes
+            const weekWidth = boxSize + gap; // Total width per week column
+
+            // First, build array of week data to determine month label positions
+            const weeks = [];
+            const tempDate = new Date(startDate);
+            while (tempDate <= calendarEnd) {
+                weeks.push({
+                    date: new Date(tempDate),
+                    month: tempDate.getMonth()
+                });
+                tempDate.setDate(tempDate.getDate() + 7);
+            }
+
+            let html = '<div style="display: flex; gap: ' + gap + 'px; align-items: flex-start;">';
+
+            // Day labels column
+            html += '<div style="display: flex; flex-direction: column; gap: ' + gap + 'px; margin-right: 6px; font-size: 10px; color: #888; min-width: 28px;">';
+            html += '<span style="height: 16px;"></span>'; // Space for month labels
+            ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach((day, i) => {
+                if (i % 2 === 1) { // Only show Mon, Wed, Fri
+                    html += `<span style="height: ${boxSize}px; line-height: ${boxSize}px;">${day}</span>`;
+                } else {
+                    html += `<span style="height: ${boxSize}px;"></span>`;
                 }
-            ], {
-                ...chartLayout,
-                grid: { rows: 1, columns: 1 },
-                margin: { t: 40, l: 20, r: 20, b: 20 },
-                height: 250
-            }, { responsive: true });
+            });
+            html += '</div>';
+
+            // Calendar grid with month labels
+            html += '<div>';
+
+            // Month labels row - show label where 1st of month appears in that week
+            html += '<div style="display: flex; gap: ' + gap + 'px; margin-bottom: 4px; height: 14px;">';
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            let lastLabelIndex = -4;
+
+            weeks.forEach((week, i) => {
+                // Check if any day in this week is the 1st of a month
+                let monthFirstDay = null;
+                const weekStart = new Date(week.date);
+                for (let d = 0; d < 7; d++) {
+                    const checkDate = new Date(weekStart);
+                    checkDate.setDate(checkDate.getDate() + d);
+                    if (checkDate.getDate() === 1) {
+                        monthFirstDay = checkDate.getMonth();
+                        break;
+                    }
+                }
+
+                if (monthFirstDay !== null && (i - lastLabelIndex) >= 3) {
+                    html += `<span style="font-size: 11px; color: #aaa; width: ${boxSize}px; overflow: visible; white-space: nowrap;">${monthNames[monthFirstDay]}</span>`;
+                    lastLabelIndex = i;
+                } else {
+                    html += `<span style="width: ${boxSize}px;"></span>`;
+                }
+            });
+            html += '</div>';
+
+            // Week columns
+            html += '<div style="display: flex; gap: ' + gap + 'px;">';
+            const current = new Date(startDate);
+            while (current <= calendarEnd) {
+                html += '<div style="display: flex; flex-direction: column; gap: ' + gap + 'px;">';
+                for (let day = 0; day < 7; day++) {
+                    const dateKey = current.toISOString().split('T')[0];
+                    const count = dateCounts[dateKey] || 0;
+                    const intensity = count > 0 ? Math.min(0.2 + (count / maxCount) * 0.8, 1) : 0;
+
+                    let bgColor = 'rgba(40, 40, 60, 0.6)'; // No activity
+                    if (count > 0) {
+                        const hue = 280; // Purple
+                        const saturation = 60 + intensity * 40;
+                        const lightness = 25 + intensity * 35;
+                        bgColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                    }
+
+                    const tooltip = count > 0 ? `${dateKey}: ${count} messages` : `${dateKey}: No messages`;
+                    html += `<div style="width: ${boxSize}px; height: ${boxSize}px; border-radius: 3px; background: ${bgColor}; cursor: pointer;" title="${tooltip}"></div>`;
+                    current.setDate(current.getDate() + 1);
+                }
+                html += '</div>';
+            }
+            html += '</div></div></div>';
+
+            calendarEl.innerHTML = html;
         }
 
         function renderHeatmap() {
@@ -1554,23 +1637,25 @@
                     [1, '#ffb74d']
                 ],
                 showscale: true,
-                colorbar: { title: 'Reactions', len: 0.5 },
+                colorbar: { title: 'Reactions', len: 0.8 },
                 hovertemplate: '<b>%{y}</b> reacted to <b>%{x}</b><br>%{z} times<extra></extra>'
             }], {
                 ...chartLayout,
+                height: 350,
                 xaxis: {
-                    title: 'Reacted to Messages By →',
+                    title: 'Whose Messages →',
                     side: 'top',
                     tickangle: -30,
-                    tickfont: { size: 10 },
+                    tickfont: { size: 11 },
                     automargin: true
                 },
                 yaxis: {
                     title: '← Who Reacted',
                     autorange: 'reversed',
-                    tickfont: { size: 10 }
+                    tickfont: { size: 11 },
+                    automargin: true
                 },
-                margin: { t: 80 }
+                margin: { t: 80, l: 100, r: 80, b: 20 }
             }, { responsive: true });
         }
 
