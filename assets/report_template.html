@@ -640,12 +640,6 @@
                 <div id="reactions-received-plot" class="plotly-graph-div"></div>
             </div>
 
-            <!-- Top Reactions: Only visible in chat mode -->
-            <div class="card" id="top-reactions-card" style="display: none; grid-column: 1 / -1;">
-                <h2>👍 Top Reactions</h2>
-                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Most used reactions in this chat</p>
-                <div id="reactions-emoji-plot" class="plotly-graph-div"></div>
-            </div>
             <!-- Reaction Matrix: Only visible in chat mode -->
             <div class="card" id="reaction-section" style="display: none;">
                 <h2>Reaction Matrix</h2>
@@ -807,34 +801,6 @@
         let filteredActivity = [];
         let currentConv = '__overview__';  // Current conversation filter
 
-        function calculateStreak(data) {
-            // Extract unique dates where messages were sent
-            const dates = [...new Set(data.map(d => d.date))].sort();
-            if (dates.length === 0) return 0;
-
-            let maxStreak = 0;
-            let currentStreak = 0;
-            let lastDate = null;
-
-            dates.forEach(dateStr => {
-                const currentDate = new Date(dateStr);
-                if (!lastDate) {
-                    currentStreak = 1;
-                } else {
-                    const diffTime = Math.abs(currentDate - lastDate);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if (diffDays === 1) {
-                        currentStreak++;
-                    } else {
-                        currentStreak = 1;
-                    }
-                }
-                if (currentStreak > maxStreak) maxStreak = currentStreak;
-                lastDate = currentDate;
-            });
-            return maxStreak;
-        }
-
         function isOverviewMode() {
             return currentConv === '__overview__';
         }
@@ -951,15 +917,11 @@
             // Toggle Reaction Cards
             const reactionsGiven = document.getElementById('reactions-given-card');
             const reactionsReceived = document.getElementById('reactions-received-card');
-            const topReactions = document.getElementById('top-reactions-card');
             const reactionSection = document.getElementById('reaction-section'); // Matrix
 
             // Show reactions given/received in BOTH modes
             if (reactionsGiven) reactionsGiven.style.display = 'block';
             if (reactionsReceived) reactionsReceived.style.display = 'block';
-
-            // Top Reactions is now redundant - hide in both modes
-            if (topReactions) topReactions.style.display = 'none';
 
             if (isOverview) {
                 if (reactionSection) reactionSection.style.display = 'none';
@@ -1004,11 +966,9 @@
                     document.getElementById('end-date').value = dates[dates.length - 1];
                 }
 
-                // Initial visibility: show Top Chats, hide Reaction Matrix, full-width charts
+                // Initial visibility: show Top Chats, full-width charts
                 const topChatsSection = document.getElementById('top-chats-section');
-                const reactionMatrixGrid = document.getElementById('reaction-matrix-grid');
                 if (topChatsSection) topChatsSection.style.display = 'block';
-                if (reactionMatrixGrid) reactionMatrixGrid.style.display = 'none';
 
                 // Full-width charts in overview mode
                 document.querySelectorAll('.chart-grid .card').forEach(card => {
@@ -1264,7 +1224,6 @@
 
             const boxSize = 14; // Size of each day box
             const gap = 3; // Gap between boxes
-            const weekWidth = boxSize + gap; // Total width per week column
 
             // First, build array of week data to determine month label positions
             const weeks = [];
@@ -1458,69 +1417,6 @@
             }, { responsive: true });
         }
 
-        function renderTopReactionsChart() {
-            // Choose data source based on current filter
-            let reactionSource = TOP_REACTIONS;
-            if (!isOverviewMode() && TOP_REACTIONS_PER_CONV[currentConv]) {
-                reactionSource = TOP_REACTIONS_PER_CONV[currentConv];
-            }
-
-            if (!reactionSource || reactionSource.length === 0) {
-                showNoData('reactions-emoji-plot', 'No reaction data for this selection');
-                return;
-            }
-
-            clearNoData('reactions-emoji-plot');
-
-            // Aggregate counts per emoji
-            const emojiCounts = {};
-            reactionSource.forEach(item => {
-                emojiCounts[item.Emoji] = (emojiCounts[item.Emoji] || 0) + item.Count;
-            });
-
-            const topEmojis = Object.entries(emojiCounts)
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10)
-                .map(e => e[0]);
-
-            const filtered = reactionSource.filter(item => topEmojis.includes(item.Emoji));
-            filtered.sort((a, b) => b.Count - a.Count);
-
-            const grouped = _.groupBy(filtered, 'Sender');
-            const traces = [];
-            let colorIdx = 0;
-
-            for (const sender in grouped) {
-                traces.push({
-                    x: grouped[sender].map(i => i.Count),
-                    y: grouped[sender].map(i => i.Emoji),
-                    orientation: 'h', name: sender, type: 'bar',
-                    marker: {
-                        color: CHART_COLORS[colorIdx % CHART_COLORS.length],
-                        line: { width: 0 }
-                    }
-                });
-                colorIdx++;
-            }
-
-            Plotly.newPlot('reactions-emoji-plot', traces, {
-                ...chartLayout,
-                barmode: 'group',
-                xaxis: {
-                    title: 'Times Reacted',
-                    showgrid: true,
-                    gridcolor: 'rgba(255,255,255,0.1)',
-                    zeroline: false
-                },
-                yaxis: {
-                    autorange: 'reversed',
-                    title: '',
-                    tickfont: { size: 16 }  // Larger emoji labels
-                },
-                showlegend: false
-            }, { responsive: true });
-        }
-
         function renderReactionsGivenReceived() {
             // Choose data source: global for overview, per-conv for specific chat
             let reactionSource = TOP_REACTIONS;
@@ -1699,10 +1595,6 @@
                 yaxis: { title: 'Messages Sent' },
                 margin: { b: 100 }
             }, { responsive: true });
-        }
-
-        function resetFilters() {
-            init();
         }
 
         // Run
