@@ -14,11 +14,15 @@
 
 | Feature | Description |
 |---------|-------------|
+| 🎯 **Conversation Filter** | Analyze all chats or drill into a specific conversation |
 | 📈 **Message Timeline** | Interactive chart of your chat activity over time |
+| 🏆 **Top Chats Leaderboard** | Your most active conversations ranked |
 | 🔥 **Activity Heatmap** | See when you chat most (day of week × hour) |
-| 😂 **Emoji Analytics** | Top emojis per person with counts |
+| ⚡ **Streak Tracking** | Longest chain of consecutive days with messages |
+| 😂 **Emoji Analytics** | Top emojis you use vs. what others use |
+| 🎁 **Reactions Given/Got** | Your most-used reactions vs. how people react to you |
 | 💬 **Reaction Matrix** | Discover who reacts to whose messages |
-| ⚡ **Response Times** | Your median reply time vs theirs |
+| 📊 **Verbosity Stats** | Who sends more messages in each conversation |
 | 📸 **Social Share Cards** | Screenshot-ready stats for your story |
 
 <p align="center">

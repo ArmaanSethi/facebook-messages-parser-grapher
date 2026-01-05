@@ -638,113 +638,112 @@
                 <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">How others react to your messages</p>
                 <div id="reactions-received-plot" class="plotly-graph-div"></div>
             </div>
-            <!-- Reaction Matrix: Full-width, only visible in chat mode -->
-            <div class="card" id="reaction-section" style="display: none; grid-column: 1 / -1;">
+
+            <!-- Top Reactions: Only visible in chat mode -->
+            <div class="card" id="top-reactions-card" style="display: none; grid-column: 1 / -1;">
+                <h2>👍 Top Reactions</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Most used reactions in this chat</p>
+                <div id="reactions-emoji-plot" class="plotly-graph-div"></div>
+            </div>
+            <!-- Reaction Matrix: Only visible in chat mode -->
+            <div class="card" id="reaction-section" style="display: none;">
                 <h2>Reaction Matrix</h2>
                 <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Who reacts to whose messages</p>
-                <div id="reaction-plot" class="plotly-graph-div"></div>
+                <div id="reaction-plot" class="plotly-graph-div" style="aspect-ratio: 1;"></div>
+            </div>
+            <div class="card" id="verbosity-card">
+                <h2>Who's More Verbose?</h2>
+                <div id="verbosity-plot" class="plotly-graph-div"></div>
             </div>
         </div>
 
-    </div>
-
-    <div class="chart-grid">
-        <div class="card" id="verbosity-card">
-            <h2>Who's More Verbose?</h2>
-            <div id="verbosity-plot" class="plotly-graph-div"></div>
-        </div>
-    </div>
-
-    <div class="chart-grid" id="emoji-grid">
-        <div class="card" id="emojis-you-card">
-            <h2>😊 Your Top Emojis</h2>
-            <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Emojis you use most in messages</p>
-            <div id="emojis-you-plot" class="plotly-graph-div"></div>
-        </div>
-        <div class="card" id="emojis-them-card">
-            <h2>💬 Their Top Emojis</h2>
-            <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Emojis others use in messages</p>
-            <div id="emojis-them-plot" class="plotly-graph-div"></div>
-        </div>
-    </div>
-
-    <div class="chart-grid">
-        <div class="card" id="heatmap-card">
-            <h2>Activity Heatmap</h2>
-            <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Message density by day and time</p>
-            <div id="heatmap-plot" class="plotly-graph-div"></div>
-        </div>
-    </div>
-
-    <!-- Conversation Streak - New Chart -->
-    <div class="chart-grid">
-        <div class="card" id="streak-card" style="grid-column: 1 / -1;">
-            <h2>⚡️ Conversation Streaks</h2>
-            <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Longest chain of consecutive days with
-                messages</p>
-            <div id="streak-plot" class="plotly-graph-div"></div>
-        </div>
-    </div>
-
-    <!-- Social Share Cards -->
-    <div class="social-section">
-        <div class="hero">
-            <h1>Share Your Stats 📸</h1>
-            <p class="subtitle">Screenshot these for your story</p>
-        </div>
-
-        <div class="story-grid">
-            <!-- Card 1: Total Messages -->
-            <div class="story-card theme-purple">
-                <div class="story-icon">💬</div>
-                <div class="story-title">You Talked<br>A Lot</div>
-                <div class="story-stat" id="card-total">0</div>
-                <div class="story-sub">Total Messages</div>
-                <div class="story-badge"><span class="dynamic-year">2024</span></div>
+        <div class="chart-grid" id="emoji-grid">
+            <div class="card" id="emojis-you-card">
+                <h2>😊 Your Top Emojis</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Emojis you use most in messages</p>
+                <div id="emojis-you-plot" class="plotly-graph-div"></div>
             </div>
-
-            <!-- Card 2: Your Vibe -->
-            <div class="story-card theme-teal">
-                <div class="story-icon">🎭</div>
-                <div class="story-title">Your Vibe</div>
-                <div class="story-stat" id="card-emoji">?</div>
-                <div class="story-sub">Your Go-To Reaction</div>
-                <div class="story-badge"><span class="dynamic-year">2024</span></div>
-            </div>
-
-            <!-- Card 3: The Balance -->
-            <div class="story-card theme-pink">
-                <div class="story-icon">⚖️</div>
-                <div class="story-title">The Balance</div>
-                <div class="story-stat" id="card-balance">50%</div>
-                <div class="story-sub">You Sent</div>
-                <div class="story-badge"><span class="dynamic-year">2024</span></div>
-            </div>
-
-            <!-- Card 4: Night Owl -->
-            <div class="story-card theme-neon">
-                <div class="story-icon">🌙</div>
-                <div class="story-title">Night Owl</div>
-                <div class="story-stat" id="card-peak">?</div>
-                <div class="story-sub">Peak Hour</div>
-                <div class="story-badge"><span class="dynamic-year">2024</span></div>
-            </div>
-
-            <!-- Card 5: Longest Streak -->
-            <div class="story-card theme-gold">
-                <div class="story-icon">🔥</div>
-                <div class="story-title">On Fire</div>
-                <div class="story-stat" id="card-streak">0</div>
-                <div class="story-sub">Longest Streak (Days)</div>
-                <div class="story-badge"><span class="dynamic-year">2024</span></div>
+            <div class="card" id="emojis-them-card">
+                <h2>💬 Their Top Emojis</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Emojis others use in messages</p>
+                <div id="emojis-them-plot" class="plotly-graph-div"></div>
             </div>
         </div>
-    </div>
 
-    <!-- Footer -->
-    <div class="footer">
-        <p>Generated with 💜 by <a href="#">Messenger Insights</a> • Your data never leaves your device</p>
-    </div>
+        <!-- Heatmap + Streak Grid -->
+        <div class="chart-grid">
+            <div class="card" id="heatmap-card">
+                <h2>Activity Heatmap</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Message density by day and time</p>
+                <div id="heatmap-plot" class="plotly-graph-div"></div>
+            </div>
+            <div class="card" id="streak-card">
+                <h2>⚡️ Conversation Streaks</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Longest chain of consecutive days with
+                    messages</p>
+                <div id="streak-plot" class="plotly-graph-div"></div>
+            </div>
+        </div>
+
+        <!-- Social Share Cards -->
+        <div class="social-section">
+            <div class="hero">
+                <h1>Share Your Stats 📸</h1>
+                <p class="subtitle">Screenshot these for your story</p>
+            </div>
+
+            <div class="story-grid">
+                <!-- Card 1: Total Messages -->
+                <div class="story-card theme-purple">
+                    <div class="story-icon">💬</div>
+                    <div class="story-title">You Talked<br>A Lot</div>
+                    <div class="story-stat" id="card-total">0</div>
+                    <div class="story-sub">Total Messages</div>
+                    <div class="story-badge"><span class="dynamic-year">2024</span></div>
+                </div>
+
+                <!-- Card 2: Your Vibe -->
+                <div class="story-card theme-teal">
+                    <div class="story-icon">🎭</div>
+                    <div class="story-title">Your Vibe</div>
+                    <div class="story-stat" id="card-emoji">?</div>
+                    <div class="story-sub">Your Go-To Reaction</div>
+                    <div class="story-badge"><span class="dynamic-year">2024</span></div>
+                </div>
+
+                <!-- Card 3: The Balance -->
+                <div class="story-card theme-pink">
+                    <div class="story-icon">⚖️</div>
+                    <div class="story-title">The Balance</div>
+                    <div class="story-stat" id="card-balance">50%</div>
+                    <div class="story-sub">You Sent</div>
+                    <div class="story-badge"><span class="dynamic-year">2024</span></div>
+                </div>
+
+                <!-- Card 4: Night Owl -->
+                <div class="story-card theme-neon">
+                    <div class="story-icon">🌙</div>
+                    <div class="story-title">Night Owl</div>
+                    <div class="story-stat" id="card-peak">?</div>
+                    <div class="story-sub">Peak Hour</div>
+                    <div class="story-badge"><span class="dynamic-year">2024</span></div>
+                </div>
+
+                <!-- Card 5: Longest Streak -->
+                <div class="story-card theme-gold">
+                    <div class="story-icon">🔥</div>
+                    <div class="story-title">On Fire</div>
+                    <div class="story-stat" id="card-streak">0</div>
+                    <div class="story-sub">Longest Streak (Days)</div>
+                    <div class="story-badge"><span class="dynamic-year">2024</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Generated with 💜 by <a href="#">Messenger Insights</a> • Your data never leaves your device</p>
+        </div>
     </div>
 
     <script>
@@ -947,21 +946,36 @@
                 topChatsSection.style.display = isOverview ? 'block' : 'none';
             }
 
-            // Show/hide Reaction Matrix and Monthly Trend cards (only in chat mode)
-            const reactionSection = document.getElementById('reaction-section');
-            const monthlyTrendSection = document.getElementById('monthly-trend-section');
-            if (reactionSection) {
-                reactionSection.style.display = isOverview ? 'none' : 'block';
-            }
-            if (monthlyTrendSection) {
-                monthlyTrendSection.style.display = isOverview ? 'none' : 'block';
+            // Toggle Reaction Cards
+            const reactionsGiven = document.getElementById('reactions-given-card');
+            const reactionsReceived = document.getElementById('reactions-received-card');
+            const topReactions = document.getElementById('top-reactions-card');
+            const reactionSection = document.getElementById('reaction-section'); // Matrix
+
+            // Show reactions given/received in BOTH modes
+            if (reactionsGiven) reactionsGiven.style.display = 'block';
+            if (reactionsReceived) reactionsReceived.style.display = 'block';
+
+            // Top Reactions is now redundant - hide in both modes
+            if (topReactions) topReactions.style.display = 'none';
+
+            if (isOverview) {
+                if (reactionSection) reactionSection.style.display = 'none';
+            } else {
+                if (reactionSection) reactionSection.style.display = 'block';
             }
 
-            // Make all chart cards full-width in overview mode for better readability
+            // In Chat Mode, all charts are squares (half-width)
             document.querySelectorAll('.chart-grid .card').forEach(card => {
                 // Skip hidden cards
                 if (card.style.display === 'none') return;
-                card.style.gridColumn = isOverview ? '1 / -1' : 'auto';
+
+                if (isOverview) {
+                    card.style.gridColumn = '1 / -1';
+                } else {
+                    // Chat Mode: All charts are half-width squares
+                    card.style.gridColumn = 'auto';
+                }
             });
 
             updateDashboard();
@@ -1175,8 +1189,8 @@
             // Use detailed activity which has date-level granularity
             let activitySource = RAW_DATA.detailed_activity;
             if (!isOverviewMode()) {
-                // Filter for specific conversation
-                activitySource = activitySource.filter(a => a.conversation === currentConv);
+                // Filter for specific conversation - use conv_title property
+                activitySource = activitySource.filter(a => a.conv_title === currentConv);
             }
 
             if (!activitySource || activitySource.length === 0) {
@@ -1252,47 +1266,49 @@
                 height: 250
             }, { responsive: true });
         }
-        if (filteredActivity.length === 0) {
-            showNoData('heatmap-plot', 'No message data for this selection');
-            return;
-        }
-        clearNoData('heatmap-plot');
 
-        const agg = {};
-        filteredActivity.forEach(row => {
-            const key = row.weekday + '-' + row.hour;
-            if (!agg[key]) agg[key] = { w: row.weekday, h: row.hour, c: 0 };
-            agg[key].c += row.count;
-        });
+        function renderHeatmap() {
+            if (filteredActivity.length === 0) {
+                showNoData('heatmap-plot', 'No message data for this selection');
+                return;
+            }
+            clearNoData('heatmap-plot');
 
-        const rows = Object.values(agg);
-        const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-
-        const z = daysOrder.map(day => {
-            return Array.from({ length: 24 }, (_, h) => {
-                const match = rows.find(r => r.w === day && r.h === h);
-                return match ? match.c : 0;
+            const agg = {};
+            filteredActivity.forEach(row => {
+                const key = row.weekday + '-' + row.hour;
+                if (!agg[key]) agg[key] = { w: row.weekday, h: row.hour, c: 0 };
+                agg[key].c += row.count;
             });
-        });
 
-        Plotly.newPlot('heatmap-plot', [{
-            x: Array.from({ length: 24 }, (_, i) => i + ':00'),
-            y: daysOrder,
-            z: z,
-            type: 'heatmap',
-            colorscale: [
-                [0, '#0d0d1a'],
-                [0.25, '#1a1a2e'],
-                [0.5, '#4a1a6b'],
-                [0.75, '#bb86fc'],
-                [1, '#03dac6']
-            ],
-            showscale: false,
-            hovertemplate: '<b>%{y}</b> at <b>%{x}</b><br>%{z} messages<extra></extra>'
-        }], {
-            ...chartLayout,
-            xaxis: { side: 'top' },
-        }, { responsive: true });
+            const rows = Object.values(agg);
+            const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+            const z = daysOrder.map(day => {
+                return Array.from({ length: 24 }, (_, h) => {
+                    const match = rows.find(r => r.w === day && r.h === h);
+                    return match ? match.c : 0;
+                });
+            });
+
+            Plotly.newPlot('heatmap-plot', [{
+                x: Array.from({ length: 24 }, (_, i) => i + ':00'),
+                y: daysOrder,
+                z: z,
+                type: 'heatmap',
+                colorscale: [
+                    [0, '#0d0d1a'],
+                    [0.25, '#1a1a2e'],
+                    [0.5, '#4a1a6b'],
+                    [0.75, '#bb86fc'],
+                    [1, '#03dac6']
+                ],
+                showscale: false,
+                hovertemplate: '<b>%{y}</b> at <b>%{x}</b><br>%{z} messages<extra></extra>'
+            }], {
+                ...chartLayout,
+                xaxis: { side: 'top' },
+            }, { responsive: true });
         }
 
         function updateEmojiChart() {

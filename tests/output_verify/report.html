@@ -119,25 +119,42 @@
 
         /* Glassmorphism Cards */
         .card {
-            background: rgba(30, 30, 46, 0.6);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 20px;
-            padding: 24px;
+            background: rgba(40, 40, 60, 0.4);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow:
-                0 8px 32px rgba(0, 0, 0, 0.3),
-                inset 0 1px 0 rgba(255, 255, 255, 0.05);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            position: relative;
+            overflow: visible;
+            /* Allow tooltips and legends to overflow slightly if needed */
         }
 
         .card:hover {
-            transform: translateY(-8px) scale(1.01);
+            transform: translateY(-8px);
             border-color: rgba(187, 134, 252, 0.3);
-            box-shadow:
-                0 20px 60px rgba(187, 134, 252, 0.15),
-                0 8px 32px rgba(0, 0, 0, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+        }
+
+        .no-data {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            color: #888;
+            font-size: 0.95rem;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 10;
+            pointer-events: none;
+            backdrop-filter: blur(5px);
         }
 
         /* Control Bar */
@@ -262,12 +279,35 @@
             border-radius: 2px;
         }
 
+        /* Year Preset Buttons */
+        .preset-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            color: #fff;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .preset-btn:hover {
+            background: rgba(187, 134, 252, 0.2);
+            border-color: #bb86fc;
+            transform: translateY(-2px);
+        }
+
+        .preset-btn.preset-active {
+            background: linear-gradient(135deg, #bb86fc, #cf6679);
+            border-color: transparent;
+        }
+
         /* Chart Container */
         .plotly-graph-div {
             width: 100%;
-            height: 450px;
+            height: 400px;
             border-radius: 12px;
-            overflow: hidden;
+            position: relative;
         }
 
         .chart-grid {
@@ -301,28 +341,32 @@
 
         .story-grid {
             display: flex;
-            gap: 24px;
+            gap: 16px;
             overflow-x: auto;
             padding: 20px 0 40px;
             justify-content: center;
-            flex-wrap: wrap;
+            flex-wrap: nowrap;
         }
 
         .story-card {
-            width: 280px;
-            height: 500px;
-            border-radius: 24px;
+            width: 240px;
+            min-width: 240px;
+            height: 480px;
+            border-radius: 32px;
             position: relative;
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            padding: 24px;
             text-align: center;
-            padding: 30px;
-            color: #fff;
-            overflow: hidden;
+            color: white;
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 10px;
         }
 
         .story-card::before {
@@ -523,6 +567,12 @@
 
         <!-- Controls -->
         <div class="controls">
+            <div class="control-group" style="flex: 2;">
+                <label>📍 Conversation</label>
+                <select id="conv-filter" onchange="updateConvFilter()">
+                    <option value="__overview__">🌐 Overview (All Chats)</option>
+                </select>
+            </div>
             <div class="control-group">
                 <label>Start Date</label>
                 <input type="date" id="start-date" onchange="updateDashboard()">
@@ -538,15 +588,35 @@
             <button onclick="resetFilters()">Reset</button>
         </div>
 
+        <!-- Year Preset Buttons -->
+        <div class="year-presets"
+            style="display: flex; gap: 10px; justify-content: center; margin: 15px 0 25px 0; flex-wrap: wrap;">
+            <button onclick="setYearFilter(2025)" class="preset-btn">📅 2025</button>
+            <button onclick="setYearFilter(2024)" class="preset-btn">📅 2024</button>
+            <button onclick="setYearFilter(2023)" class="preset-btn">📅 2023</button>
+            <button onclick="setLast12Months()" class="preset-btn">🔄 Last 12 Months</button>
+            <button onclick="resetFilters()" class="preset-btn preset-active">🌐 All Time</button>
+        </div>
+
+        <!-- Top Chats Leaderboard (Only visible in Overview mode) -->
+        <div class="card" id="top-chats-section" style="margin-bottom: 30px;">
+            <h2>🏆 Your Most Active Chats</h2>
+            <div id="top-chats-list" style="display: grid; gap: 12px;"></div>
+        </div>
+
         <!-- Stats Cards -->
         <div class="grid-stats">
             <div class="card stat-card">
                 <div class="stat-value" id="stat-total">0</div>
-                <div class="stat-label">Messages Exchanged</div>
+                <div class="stat-label" id="stat-total-label">Messages Exchanged</div>
             </div>
             <div class="card stat-card">
                 <div class="stat-value" id="stat-days">0</div>
-                <div class="stat-label">Days Connected</div>
+                <div class="stat-label" id="stat-days-label">Days Connected</div>
+            </div>
+            <div class="card stat-card" id="stat-convs-card">
+                <div class="stat-value" id="stat-convs">0</div>
+                <div class="stat-label">Conversations</div>
             </div>
         </div>
 
@@ -556,26 +626,68 @@
             <div id="timeline-plot" class="plotly-graph-div"></div>
         </div>
 
-        <!-- Charts Grid -->
-        <div class="chart-grid">
-            <div class="card">
-                <h2>Activity Heatmap</h2>
-                <div id="heatmap-plot" class="plotly-graph-div"></div>
+        <!-- Reactions Grid: Given/Received + Matrix (chat mode only) -->
+        <div class="chart-grid" id="reaction-grid">
+            <div class="card" id="reactions-given-card">
+                <h2>🎁 Reactions You Gave</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Your most used reaction emojis</p>
+                <div id="reactions-given-plot" class="plotly-graph-div"></div>
             </div>
-            <div class="card">
-                <h2>Top Emojis</h2>
-                <div id="emoji-plot" class="plotly-graph-div"></div>
+            <div class="card" id="reactions-received-card">
+                <h2>🎉 Reactions You Got</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">How others react to your messages</p>
+                <div id="reactions-received-plot" class="plotly-graph-div"></div>
+            </div>
+
+            <!-- Top Reactions: Only visible in chat mode -->
+            <div class="card" id="top-reactions-card" style="display: none; grid-column: 1 / -1;">
+                <h2>👍 Top Reactions</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Most used reactions in this chat</p>
+                <div id="reactions-emoji-plot" class="plotly-graph-div"></div>
+            </div>
+            <!-- Reaction Matrix: Full-width, only visible in chat mode -->
+            <div class="card" id="reaction-section" style="display: none; grid-column: 1 / -1;">
+                <h2>Reaction Matrix</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Who reacts to whose messages</p>
+                <div id="reaction-plot" class="plotly-graph-div"></div>
             </div>
         </div>
 
         <div class="chart-grid">
-            <div class="card">
-                <h2>Reaction Matrix</h2>
-                <div id="reaction-plot" class="plotly-graph-div"></div>
-            </div>
-            <div class="card">
+            <div class="card" id="verbosity-card">
                 <h2>Who's More Verbose?</h2>
                 <div id="verbosity-plot" class="plotly-graph-div"></div>
+            </div>
+        </div>
+
+        <div class="chart-grid" id="emoji-grid">
+            <div class="card" id="emojis-you-card">
+                <h2>😊 Your Top Emojis</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Emojis you use most in messages</p>
+                <div id="emojis-you-plot" class="plotly-graph-div"></div>
+            </div>
+            <div class="card" id="emojis-them-card">
+                <h2>💬 Their Top Emojis</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Emojis others use in messages</p>
+                <div id="emojis-them-plot" class="plotly-graph-div"></div>
+            </div>
+        </div>
+
+        <div class="chart-grid">
+            <div class="card" id="heatmap-card">
+                <h2>Activity Heatmap</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Message density by day and time</p>
+                <div id="heatmap-plot" class="plotly-graph-div"></div>
+            </div>
+        </div>
+
+        <!-- Conversation Streak - New Chart -->
+        <div class="chart-grid">
+            <div class="card" id="streak-card" style="grid-column: 1 / -1;">
+                <h2>⚡️ Conversation Streaks</h2>
+                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Longest chain of consecutive days with
+                    messages</p>
+                <div id="streak-plot" class="plotly-graph-div"></div>
             </div>
         </div>
 
@@ -596,21 +708,21 @@
                     <div class="story-badge"><span class="dynamic-year">2024</span></div>
                 </div>
 
-                <!-- Card 2: Top Emoji -->
+                <!-- Card 2: Your Vibe -->
                 <div class="story-card theme-teal">
                     <div class="story-icon">🎭</div>
                     <div class="story-title">Your Vibe</div>
                     <div class="story-stat" id="card-emoji">?</div>
-                    <div class="story-sub">Most Used Emoji</div>
+                    <div class="story-sub">Your Go-To Reaction</div>
                     <div class="story-badge"><span class="dynamic-year">2024</span></div>
                 </div>
 
-                <!-- Card 3: Days Active -->
+                <!-- Card 3: The Balance -->
                 <div class="story-card theme-pink">
-                    <div class="story-icon">🔥</div>
-                    <div class="story-title">BFF Status</div>
-                    <div class="story-stat" id="card-days">0</div>
-                    <div class="story-sub">Days Connected</div>
+                    <div class="story-icon">⚖️</div>
+                    <div class="story-title">The Balance</div>
+                    <div class="story-stat" id="card-balance">50%</div>
+                    <div class="story-sub">You Sent</div>
                     <div class="story-badge"><span class="dynamic-year">2024</span></div>
                 </div>
 
@@ -623,12 +735,12 @@
                     <div class="story-badge"><span class="dynamic-year">2024</span></div>
                 </div>
 
-                <!-- Card 5: Streak -->
+                <!-- Card 5: Longest Streak -->
                 <div class="story-card theme-gold">
-                    <div class="story-icon">⚡</div>
+                    <div class="story-icon">🔥</div>
                     <div class="story-title">On Fire</div>
-                    <div class="story-stat" id="card-streak">?</div>
-                    <div class="story-sub">Average Per Day</div>
+                    <div class="story-stat" id="card-streak">0</div>
+                    <div class="story-sub">Longest Streak (Days)</div>
                     <div class="story-badge"><span class="dynamic-year">2024</span></div>
                 </div>
             </div>
@@ -642,10 +754,16 @@
 
     <script>
         // --- 1. DATA INJECTION ---
-        const RAW_DATA = {"daily_counts": [{"date": "2023-01-01", "sender": "Armaan Sethi", "count": 3}, {"date": "2023-01-01", "sender": "Jane DM", "count": 3}], "detailed_activity": [{"date": "2023-01-01", "hour": 0, "weekday": "Sunday", "sender": "Armaan Sethi", "count": 3}, {"date": "2023-01-01", "hour": 0, "weekday": "Sunday", "sender": "Jane DM", "count": 3}], "sender_colors": {"Jane DM": "#BB86FC", "Armaan Sethi": "#03DAC6"}, "avg_length": [{"sender": "Armaan Sethi", "word_count": 4.3}, {"sender": "Jane DM", "word_count": 5.3}]};
+        const OWNER_NAME = "Armaan Sethi";
+        const RAW_DATA = {"conversations": [{"title": "Pizza Chat", "participants": ["Jane DM", "Armaan Sethi"], "participant_count": 2, "is_group": false, "message_count": 4}, {"title": "Jane DM", "participants": ["Jane DM", "Armaan Sethi"], "participant_count": 2, "is_group": false, "message_count": 2}], "daily_counts": [{"date": "2023-01-01", "sender": "Armaan Sethi", "conv_title": "Jane DM", "count": 1}, {"date": "2023-01-01", "sender": "Armaan Sethi", "conv_title": "Pizza Chat", "count": 2}, {"date": "2023-01-01", "sender": "Jane DM", "conv_title": "Jane DM", "count": 1}, {"date": "2023-01-01", "sender": "Jane DM", "conv_title": "Pizza Chat", "count": 2}], "detailed_activity": [{"date": "2023-01-01", "hour": 0, "weekday": "Sunday", "sender": "Armaan Sethi", "conv_title": "Jane DM", "count": 1}, {"date": "2023-01-01", "hour": 0, "weekday": "Sunday", "sender": "Armaan Sethi", "conv_title": "Pizza Chat", "count": 2}, {"date": "2023-01-01", "hour": 0, "weekday": "Sunday", "sender": "Jane DM", "conv_title": "Jane DM", "count": 1}, {"date": "2023-01-01", "hour": 0, "weekday": "Sunday", "sender": "Jane DM", "conv_title": "Pizza Chat", "count": 2}], "sender_colors": {"Jane DM": "#BB86FC", "Armaan Sethi": "#03DAC6"}, "avg_length": [{"sender": "Armaan Sethi", "word_count": 4.3}, {"sender": "Jane DM", "word_count": 5.3}]};
         const EMOJI_DATA = [{"Sender": "Jane DM", "Emoji": "\ud83d\ude0d", "Count": 2}, {"Sender": "Jane DM", "Emoji": "\ud83d\ude02", "Count": 2}, {"Sender": "Jane DM", "Emoji": "\ud83c\udf55", "Count": 2}, {"Sender": "Armaan Sethi", "Emoji": "\ud83d\ude02", "Count": 1}, {"Sender": "Armaan Sethi", "Emoji": "\ud83d\udc4d", "Count": 1}, {"Sender": "Armaan Sethi", "Emoji": "\u2764\ufe0f", "Count": 1}];
+        const EMOJI_PER_CONV = {"Pizza Chat": [{"Sender": "Jane DM", "Emoji": "\ud83d\ude0d", "Count": 2}, {"Sender": "Jane DM", "Emoji": "\ud83c\udf55", "Count": 2}, {"Sender": "Jane DM", "Emoji": "\ud83d\ude02", "Count": 1}, {"Sender": "Armaan Sethi", "Emoji": "\ud83d\ude02", "Count": 1}, {"Sender": "Armaan Sethi", "Emoji": "\ud83d\udc4d", "Count": 1}], "Jane DM": [{"Sender": "Jane DM", "Emoji": "\ud83d\ude02", "Count": 1}, {"Sender": "Armaan Sethi", "Emoji": "\u2764\ufe0f", "Count": 1}]};
         const REACTION_DATA = {"Jane DM": {"Armaan Sethi": 2}};
+        const REACTION_PER_CONV = {"Pizza Chat": {"Jane DM": {"Armaan Sethi": 1}}, "Jane DM": {"Jane DM": {"Armaan Sethi": 1}}};
+        const TOP_REACTIONS = [{"Sender": "Jane DM", "Emoji": "\u2764\ufe0f", "Count": 1}, {"Sender": "Jane DM", "Emoji": "\ud83d\udc4d", "Count": 1}];
+        const TOP_REACTIONS_PER_CONV = {"Pizza Chat": [{"Sender": "Jane DM", "Emoji": "\u2764\ufe0f", "Count": 1}], "Jane DM": [{"Sender": "Jane DM", "Emoji": "\ud83d\udc4d", "Count": 1}]};
         const SENDER_COLORS = RAW_DATA.sender_colors;
+        const CONVERSATIONS = RAW_DATA.conversations || [];
 
         // Premium Color Palette
         const CHART_COLORS = ['#bb86fc', '#03dac6', '#cf6679', '#ffb74d', '#4fc3f7', '#81c784', '#f48fb1'];
@@ -691,11 +809,198 @@
 
         // --- 4. STATE ---
         let filteredActivity = [];
+        let currentConv = '__overview__';  // Current conversation filter
+
+        function calculateStreak(data) {
+            // Extract unique dates where messages were sent
+            const dates = [...new Set(data.map(d => d.date))].sort();
+            if (dates.length === 0) return 0;
+
+            let maxStreak = 0;
+            let currentStreak = 0;
+            let lastDate = null;
+
+            dates.forEach(dateStr => {
+                const currentDate = new Date(dateStr);
+                if (!lastDate) {
+                    currentStreak = 1;
+                } else {
+                    const diffTime = Math.abs(currentDate - lastDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays === 1) {
+                        currentStreak++;
+                    } else {
+                        currentStreak = 1;
+                    }
+                }
+                if (currentStreak > maxStreak) maxStreak = currentStreak;
+                lastDate = currentDate;
+            });
+            return maxStreak;
+        }
+
+        function isOverviewMode() {
+            return currentConv === '__overview__';
+        }
+
+        function getActiveReactionData() {
+            if (currentConv === '__overview__') {
+                return null;
+            }
+            return REACTION_PER_CONV[currentConv] || null;
+        }
+
+        function populateConversationDropdown() {
+            const select = document.getElementById('conv-filter'); // Keep original ID for now
+            if (!select || !CONVERSATIONS.length) return;
+
+            // Clear existing options except first
+            select.innerHTML = '<option value="__overview__">🌐 Overview (All Chats)</option>';
+
+            // Add all conversations in one list, sorted by message count
+            CONVERSATIONS.forEach(conv => {
+                const opt = document.createElement('option');
+                opt.value = conv.title;
+                opt.textContent = `${conv.title} (${conv.message_count.toLocaleString()} msgs)`;
+                select.appendChild(opt);
+            });
+        }
+
+        function resetFilters() {
+            document.getElementById('conv-filter').value = '__overview__'; // Use conv-filter
+            currentConv = '__overview__';
+            if (RAW_DATA.detailed_activity.length > 0) {
+                const dates = RAW_DATA.detailed_activity.map(d => d.date).sort();
+                document.getElementById('start-date').value = dates[0];
+                document.getElementById('end-date').value = dates[dates.length - 1];
+            }
+            updatePresetActiveState('all');
+            updateConvFilter(); // Use updateConvFilter to properly restore Overview mode
+        }
+
+        function setYearFilter(year) {
+            document.getElementById('start-date').value = `${year}-01-01`;
+            document.getElementById('end-date').value = `${year}-12-31`;
+            updatePresetActiveState(year);
+            updateDashboard();
+        }
+
+        function setLast12Months() {
+            const today = new Date();
+            const oneYearAgo = new Date(today);
+            oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+            document.getElementById('start-date').value = oneYearAgo.toISOString().split('T')[0];
+            document.getElementById('end-date').value = today.toISOString().split('T')[0];
+            updatePresetActiveState('last12');
+            updateDashboard();
+        }
+
+        function updatePresetActiveState(selected) {
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.classList.remove('preset-active');
+            });
+            // Find the matching button and add active class
+            const buttons = document.querySelectorAll('.preset-btn');
+            buttons.forEach(btn => {
+                const text = btn.textContent;
+                if ((selected === 'all' && text.includes('All Time')) ||
+                    (selected === 'last12' && text.includes('Last 12')) ||
+                    (text.includes(selected.toString()))) {
+                    btn.classList.add('preset-active');
+                }
+            });
+        }
+
+        // --- 4. STATE ---
+        // (Variables declared above: filteredActivity, currentConv)
+
+        // --- 4.1 CONVERSATION FILTER LOGIC ---
+        function renderTopChats() {
+            const container = document.getElementById('top-chats-list');
+            if (!container) return;
+
+            const top5 = CONVERSATIONS.slice(0, 5);
+            container.innerHTML = top5.map((conv, i) => {
+                const medal = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'][i];
+                const type = conv.is_group ? '👥' : '💬';
+                return `
+                    <div style="display: flex; align-items: center; padding: 12px 16px; background: rgba(255,255,255,0.05); border-radius: 10px; cursor: pointer;" 
+                         onclick="selectConversation('${conv.title.replace(/'/g, "\\'")}')">
+                        <div style="font-size: 1.5rem; margin-right: 12px;">${medal}</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${conv.title}</div>
+                            <div style="font-size: 0.8rem; color: #888;">${type} ${conv.message_count.toLocaleString()} msgs</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function selectConversation(title) {
+            document.getElementById('conv-filter').value = title;
+            updateConvFilter(); // Renamed from onConversationChange
+        }
+
+        function updateConvFilter() { // Renamed from onConversationChange
+            currentConv = document.getElementById('conv-filter').value;
+            const isOverview = isOverviewMode();
+
+            // Show/hide Top Chats section based on mode
+            const topChatsSection = document.getElementById('top-chats-section');
+            if (topChatsSection) {
+                topChatsSection.style.display = isOverview ? 'block' : 'none';
+            }
+
+            // Toggle Reaction Cards
+            const reactionsGiven = document.getElementById('reactions-given-card');
+            const reactionsReceived = document.getElementById('reactions-received-card');
+            const topReactions = document.getElementById('top-reactions-card');
+            const reactionSection = document.getElementById('reaction-section'); // Matrix
+
+            if (isOverview) {
+                if (reactionsGiven) reactionsGiven.style.display = 'block';
+                if (reactionsReceived) reactionsReceived.style.display = 'block';
+                if (topReactions) topReactions.style.display = 'none';
+                if (reactionSection) reactionSection.style.display = 'none';
+            } else {
+                if (reactionsGiven) reactionsGiven.style.display = 'none';
+                if (reactionsReceived) reactionsReceived.style.display = 'none';
+                if (topReactions) topReactions.style.display = 'block';
+                if (reactionSection) reactionSection.style.display = 'block';
+            }
+
+            // Make all chart cards full-width in overview mode for better readability
+            // In Chat Mode, ensure specific large charts remain full-width
+            document.querySelectorAll('.chart-grid .card').forEach(card => {
+                // Skip hidden cards
+                if (card.style.display === 'none') return;
+
+                if (isOverview) {
+                    card.style.gridColumn = '1 / -1';
+                } else {
+                    // Chat Mode: Specific cards should be full width
+                    // Added top-reactions-card to full width list for Chat Mode
+                    const fullWidthIds = ['reaction-section', 'verbosity-card', 'heatmap-card', 'streak-card', 'top-reactions-card'];
+                    if (fullWidthIds.includes(card.id)) {
+                        card.style.gridColumn = '1 / -1';
+                    } else {
+                        card.style.gridColumn = 'auto';
+                    }
+                }
+            });
+
+            updateDashboard();
+        }
 
         // --- 5. INIT ---
         function init() {
             try {
                 createParticles();
+
+                // Populate conversation dropdown
+                populateConversationDropdown();
+                renderTopChats();
 
                 // Set dynamic year on all badges
                 const year = new Date().getFullYear();
@@ -709,7 +1014,17 @@
                     document.getElementById('end-date').value = dates[dates.length - 1];
                 }
 
-                renderReactions();
+                // Initial visibility: show Top Chats, hide Reaction Matrix, full-width charts
+                const topChatsSection = document.getElementById('top-chats-section');
+                const reactionMatrixGrid = document.getElementById('reaction-matrix-grid');
+                if (topChatsSection) topChatsSection.style.display = 'block';
+                if (reactionMatrixGrid) reactionMatrixGrid.style.display = 'none';
+
+                // Full-width charts in overview mode
+                document.querySelectorAll('.chart-grid .card').forEach(card => {
+                    card.style.gridColumn = '1 / -1';
+                });
+
                 renderVerbosity();
                 updateDashboard();
             } catch (e) {
@@ -724,28 +1039,78 @@
             const start = document.getElementById('start-date').value;
             const end = document.getElementById('end-date').value;
 
-            filteredActivity = RAW_DATA.detailed_activity.filter(row => row.date >= start && row.date <= end);
+            // Filter by date AND conversation
+            filteredActivity = RAW_DATA.detailed_activity.filter(row => {
+                const dateMatch = row.date >= start && row.date <= end;
+                const convMatch = currentConv === '__overview__' || row.conv_title === currentConv;
+                return dateMatch && convMatch;
+            });
 
             const totalMsgs = _.sumBy(filteredActivity, 'count');
             const uniqueDays = _.uniqBy(filteredActivity, 'date').length;
-            const avgPerDay = uniqueDays > 0 ? Math.round(totalMsgs / uniqueDays) : 0;
+            const streak = calculateStreak(filteredActivity);
+
+            // Calculate Message Balance (You vs Them)
+            let myMsgs = 0;
+            filteredActivity.forEach(row => {
+                if (row.sender === OWNER_NAME) myMsgs += row.count;
+            });
+            const myPercent = totalMsgs > 0 ? Math.round((myMsgs / totalMsgs) * 100) : 0;
 
             // Animate stats
             animateValue(document.getElementById('stat-total'), 0, totalMsgs, 1500);
             animateValue(document.getElementById('stat-days'), 0, uniqueDays, 1200);
 
+            // Show/hide conversation count based on mode
+            const convsCard = document.getElementById('stat-convs-card');
+            if (isOverviewMode()) {
+                convsCard.style.display = 'block';
+                document.getElementById('stat-convs').innerText = CONVERSATIONS.length;
+                document.getElementById('stat-total-label').innerText = 'Total Messages';
+                document.getElementById('stat-days-label').innerText = 'Days Active';
+            } else {
+                convsCard.style.display = 'none';
+                document.getElementById('stat-total-label').innerText = 'Messages Together';
+                document.getElementById('stat-days-label').innerText = 'Days Connected';
+            }
+
             // Update Social Cards
             document.getElementById('card-total').innerText = (totalMsgs > 1000) ? (totalMsgs / 1000).toFixed(1) + 'k' : totalMsgs;
-            document.getElementById('card-days').innerText = uniqueDays;
-            document.getElementById('card-streak').innerText = avgPerDay;
+            document.getElementById('card-balance').innerText = myPercent + '%';
+            document.getElementById('card-streak').innerText = streak;
 
-            // Find Top Emoji
-            if (EMOJI_DATA.length > 0) {
+            // Find Top Reaction (Your Vibe)
+            // If viewing a specific conv, show YOUR top reaction. In overview, show global top emoji or reaction?
+            // "Your Vibe" implies what YOU do. 
+            // We have TOP_REACTIONS which is {Sender: [{Emoji, Count}]}
+
+            let vibeEmoji = '?';
+            // Get proper reaction source
+            const topRxnData = (!isOverviewMode() && TOP_REACTIONS_PER_CONV[currentConv])
+                ? TOP_REACTIONS_PER_CONV[currentConv]
+                : TOP_REACTIONS;
+
+            // Find OWNER'S top reaction in this data
+            if (topRxnData && OWNER_NAME) {
+                // topRxnData is array of {Sender, Emoji, Count}
+                // Filter for owner
+                const myReactions = topRxnData.filter(x => x.Sender === OWNER_NAME);
+                if (myReactions.length > 0) {
+                    // Sort by count desc - ensure we use .Count property
+                    myReactions.sort((a, b) => b.Count - a.Count);
+                    vibeEmoji = myReactions[0].Emoji;
+                }
+            }
+            // Fallback if no reactions found (or no owner match), maybe show top overall emoji?
+            if (vibeEmoji === '?' && EMOJI_DATA.length > 0) {
+                // Just pick top used emoji overall
                 const counts = {};
                 EMOJI_DATA.forEach(i => counts[i.Emoji] = (counts[i.Emoji] || 0) + i.Count);
                 const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-                document.getElementById('card-emoji').innerText = sorted[0] ? sorted[0][0] : '?';
+                if (sorted[0]) vibeEmoji = sorted[0][0];
             }
+
+            document.getElementById('card-emoji').innerText = vibeEmoji;
 
             // Find Peak Hour
             const hourCounts = {};
@@ -763,19 +1128,48 @@
             renderTimeline();
             renderHeatmap();
             updateEmojiChart();
+            renderReactionsGivenReceived();
+            renderVerbosity();
+            renderStreakChart();
+
+            // Only render reaction matrix when viewing a specific chat
+            if (!isOverviewMode()) {
+                renderReactions();
+            }
         }
 
         // --- 7. CHARTS ---
         const chartLayout = {
-            template: 'plotly_dark',
+            font: { family: 'Inter, sans-serif', color: '#e0e0e0' },
             paper_bgcolor: 'rgba(0,0,0,0)',
             plot_bgcolor: 'rgba(0,0,0,0)',
-            font: { family: 'Inter, sans-serif', color: '#aaa' },
-            margin: { t: 40, l: 50, r: 20, b: 50 },
+            margin: { t: 30, l: 80, r: 20, b: 40 },
+            showlegend: false,
             hoverlabel: { bgcolor: '#1e1e2e', bordercolor: '#bb86fc', font: { family: 'Inter' } }
         };
 
+        function showNoData(containerId, message) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            // Clear existing Plotly chart if any
+            Plotly.purge(container);
+            container.innerHTML = `<div class="no-data">${message}</div>`;
+        }
+
+        function clearNoData(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            const noData = container.querySelector('.no-data');
+            if (noData) noData.remove();
+        }
+
         function renderTimeline() {
+            if (filteredActivity.length === 0) {
+                showNoData('timeline-plot', 'No message data for this selection');
+                return;
+            }
+            clearNoData('timeline-plot');
+
             const grouped = _.groupBy(filteredActivity, r => r.sender);
             const traces = [];
             let colorIdx = 0;
@@ -802,7 +1196,96 @@
             }, { responsive: true });
         }
 
+        function renderStreakChart() {
+            // Get data source based on current filter
+            // Use detailed activity which has date-level granularity
+            let activitySource = RAW_DATA.detailed_activity;
+            if (!isOverviewMode()) {
+                // Filter for specific conversation
+                activitySource = activitySource.filter(a => a.conversation === currentConv);
+            }
+
+            if (!activitySource || activitySource.length === 0) {
+                showNoData('streak-plot', 'No message data to calculate streaks');
+                return;
+            }
+
+            // Extract unique dates with messages
+            const activeDates = [...new Set(activitySource.map(a => a.date))].sort();
+
+            if (activeDates.length === 0) {
+                showNoData('streak-plot', 'No active days found');
+                return;
+            }
+
+            // Calculate streaks
+            let currentStreak = 0;
+            let longestStreak = 0;
+            let tempStreak = 0;
+            let lastDate = null;
+
+            // Parse dates to track consecutive days
+            // We'll use timestamps for reliable day difference calc
+            const oneDay = 24 * 60 * 60 * 1000;
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Iterate through sorted dates
+            activeDates.forEach((dateStr, index) => {
+                const currentDate = new Date(dateStr);
+                currentDate.setHours(0, 0, 0, 0); // normalize time
+
+                if (index === 0) {
+                    tempStreak = 1;
+                } else {
+                    const diffDays = Math.round((currentDate - lastDate) / oneDay);
+                    if (diffDays === 1) {
+                        tempStreak++;
+                    } else {
+                        // streak broken
+                        longestStreak = Math.max(longestStreak, tempStreak);
+                        tempStreak = 1;
+                    }
+                }
+                lastDate = currentDate;
+            });
+
+            // Check final temp streak
+            longestStreak = Math.max(longestStreak, tempStreak);
+
+            clearNoData('streak-plot');
+
+            // Visualization: Indicator for Longest Streak
+            Plotly.newPlot('streak-plot', [
+                {
+                    type: 'indicator',
+                    mode: 'number+delta',
+                    value: longestStreak,
+                    title: {
+                        text: "Longest Daily Streak",
+                        font: { size: 24, color: '#888' }
+                    },
+                    number: {
+                        suffix: " Days",
+                        font: { size: 50, color: '#FFD740' }
+                    },
+                    domain: { x: [0, 1], y: [0, 1] }
+                }
+            ], {
+                ...chartLayout,
+                grid: { rows: 1, columns: 1 },
+                margin: { t: 40, l: 20, r: 20, b: 20 },
+                height: 250
+            }, { responsive: true });
+        }
+
         function renderHeatmap() {
+            if (filteredActivity.length === 0) {
+                showNoData('heatmap-plot', 'No message data for this selection');
+                return;
+            }
+            clearNoData('heatmap-plot');
+
             const agg = {};
             filteredActivity.forEach(row => {
                 const key = row.weekday + '-' + row.hour;
@@ -841,18 +1324,95 @@
         }
 
         function updateEmojiChart() {
-            const topN = parseInt(document.getElementById('top-n').value) || 10;
-            const globalCounts = {};
-            EMOJI_DATA.forEach(item => {
-                globalCounts[item.Emoji] = (globalCounts[item.Emoji] || 0) + item.Count;
+            // Choose data source based on current filter
+            const emojiSource = (!isOverviewMode() && EMOJI_PER_CONV[currentConv]) ? EMOJI_PER_CONV[currentConv] : EMOJI_DATA;
+
+            if (!emojiSource || emojiSource.length === 0) {
+                showNoData('emojis-you-plot', 'No emoji data');
+                showNoData('emojis-them-plot', 'No emoji data');
+                return;
+            }
+
+            // YOUR emojis (where Sender = OWNER_NAME)
+            const yourEmojis = emojiSource.filter(e => e.Sender === OWNER_NAME);
+            renderEmojiChart('emojis-you-plot', yourEmojis, '#bb86fc');
+
+            // THEIR emojis (where Sender != OWNER_NAME)
+            const theirEmojis = emojiSource.filter(e => e.Sender !== OWNER_NAME);
+            renderEmojiChart('emojis-them-plot', theirEmojis, '#03dac6');
+        }
+
+        function renderEmojiChart(plotId, emojiData, color) {
+            if (!emojiData || emojiData.length === 0) {
+                showNoData(plotId, 'No emoji data');
+                return;
+            }
+
+            clearNoData(plotId);
+
+            // Aggregate counts per emoji
+            const emojiCounts = {};
+            emojiData.forEach(item => {
+                emojiCounts[item.Emoji] = (emojiCounts[item.Emoji] || 0) + item.Count;
             });
 
-            const topEmojis = Object.entries(globalCounts)
+            const topEmojis = Object.entries(emojiCounts)
                 .sort((a, b) => b[1] - a[1])
-                .slice(0, topN)
+                .slice(0, 5);  // Top 5 for clean look
+
+            Plotly.newPlot(plotId, [{
+                x: topEmojis.map(d => d[1]),
+                y: topEmojis.map(d => d[0]),
+                type: 'bar',
+                orientation: 'h',
+                marker: {
+                    color: color,
+                    line: { width: 0 }
+                },
+                hovertemplate: '%{y}: %{x} times<extra></extra>'
+            }], {
+                ...chartLayout,
+                xaxis: {
+                    title: 'Times Used',
+                    showgrid: true,
+                    gridcolor: 'rgba(255,255,255,0.1)',
+                    zeroline: false
+                },
+                yaxis: {
+                    autorange: 'reversed',
+                    title: '',
+                    tickfont: { size: 22 }  // Large emoji labels
+                },
+                showlegend: false
+            }, { responsive: true });
+        }
+
+        function renderTopReactionsChart() {
+            // Choose data source based on current filter
+            let reactionSource = TOP_REACTIONS;
+            if (!isOverviewMode() && TOP_REACTIONS_PER_CONV[currentConv]) {
+                reactionSource = TOP_REACTIONS_PER_CONV[currentConv];
+            }
+
+            if (!reactionSource || reactionSource.length === 0) {
+                showNoData('reactions-emoji-plot', 'No reaction data for this selection');
+                return;
+            }
+
+            clearNoData('reactions-emoji-plot');
+
+            // Aggregate counts per emoji
+            const emojiCounts = {};
+            reactionSource.forEach(item => {
+                emojiCounts[item.Emoji] = (emojiCounts[item.Emoji] || 0) + item.Count;
+            });
+
+            const topEmojis = Object.entries(emojiCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10)
                 .map(e => e[0]);
 
-            const filtered = EMOJI_DATA.filter(item => topEmojis.includes(item.Emoji));
+            const filtered = reactionSource.filter(item => topEmojis.includes(item.Emoji));
             filtered.sort((a, b) => b.Count - a.Count);
 
             const grouped = _.groupBy(filtered, 'Sender');
@@ -872,26 +1432,127 @@
                 colorIdx++;
             }
 
-            Plotly.newPlot('emoji-plot', traces, {
+            Plotly.newPlot('reactions-emoji-plot', traces, {
                 ...chartLayout,
                 barmode: 'group',
-                yaxis: { autorange: 'reversed' },
-                showlegend: true,
-                legend: { orientation: 'h', y: -0.15 }
+                xaxis: {
+                    title: 'Times Reacted',
+                    showgrid: true,
+                    gridcolor: 'rgba(255,255,255,0.1)',
+                    zeroline: false
+                },
+                yaxis: {
+                    autorange: 'reversed',
+                    title: '',
+                    tickfont: { size: 16 }  // Larger emoji labels
+                },
+                showlegend: false
             }, { responsive: true });
         }
 
-        function renderReactions() {
-            const reactors = Object.keys(REACTION_DATA);
-            const targets = _.uniq(_.flatten(Object.values(REACTION_DATA).map(Object.keys)));
+        function renderReactionsGivenReceived() {
+            // Choose data source: global for overview, per-conv for specific chat
+            let reactionSource = TOP_REACTIONS;
+            if (!isOverviewMode() && TOP_REACTIONS_PER_CONV[currentConv]) {
+                reactionSource = TOP_REACTIONS_PER_CONV[currentConv];
+            }
 
-            if (reactors.length === 0) {
-                document.getElementById('reaction-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No reaction data available</p>';
+            if (!reactionSource || reactionSource.length === 0) {
+                showNoData('reactions-given-plot', 'No reaction data');
+                showNoData('reactions-received-plot', 'No reaction data');
                 return;
             }
 
+            // Reactions YOU gave (where Sender = OWNER_NAME)
+            const givenReactions = reactionSource.filter(r => r.Sender === OWNER_NAME);
+            const givenCounts = {};
+            givenReactions.forEach(item => {
+                givenCounts[item.Emoji] = (givenCounts[item.Emoji] || 0) + item.Count;
+            });
+
+            const givenTop = Object.entries(givenCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            if (givenTop.length > 0) {
+                clearNoData('reactions-given-plot');
+                Plotly.newPlot('reactions-given-plot', [{
+                    x: givenTop.map(d => d[1]),
+                    y: givenTop.map(d => d[0]),
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: {
+                        color: '#bb86fc',
+                        line: { width: 0 }
+                    }
+                }], {
+                    ...chartLayout,
+                    xaxis: { title: 'Times Used' },
+                    yaxis: {
+                        autorange: 'reversed',
+                        tickfont: { size: 18 }
+                    }
+                }, { responsive: true });
+            } else {
+                showNoData('reactions-given-plot', 'No reactions given');
+            }
+
+            // Reactions YOU received (where Sender != OWNER_NAME)
+            const receivedReactions = reactionSource.filter(r => r.Sender !== OWNER_NAME);
+            const receivedCounts = {};
+            receivedReactions.forEach(item => {
+                receivedCounts[item.Emoji] = (receivedCounts[item.Emoji] || 0) + item.Count;
+            });
+
+            const receivedTop = Object.entries(receivedCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            if (receivedTop.length > 0) {
+                clearNoData('reactions-received-plot');
+                Plotly.newPlot('reactions-received-plot', [{
+                    x: receivedTop.map(d => d[1]),
+                    y: receivedTop.map(d => d[0]),
+                    type: 'bar',
+                    orientation: 'h',
+                    marker: {
+                        color: '#03dac6',
+                        line: { width: 0 }
+                    }
+                }], {
+                    ...chartLayout,
+                    xaxis: { title: 'Times Received' },
+                    yaxis: {
+                        autorange: 'reversed',
+                        tickfont: { size: 18 }
+                    }
+                }, { responsive: true });
+            } else {
+                showNoData('reactions-received-plot', 'No reactions received');
+            }
+        }
+
+        function renderReactions() {
+            // Get the appropriate reaction data based on current conversation
+            const reactionData = getActiveReactionData();
+
+            if (!reactionData) {
+                showNoData('reaction-plot', 'Select a specific chat to see the reaction matrix');
+                return;
+            }
+
+            const reactors = Object.keys(reactionData);
+            const targets = _.uniq(_.flatten(Object.values(reactionData).map(Object.keys)));
+
+            if (reactors.length === 0) {
+                showNoData('reaction-plot', 'No reaction data for this chat');
+                return;
+            }
+
+            clearNoData('reaction-plot');
+
             const z = reactors.map(reactor => {
-                return targets.map(target => REACTION_DATA[reactor][target] || 0);
+                return targets.map(target => reactionData[reactor][target] || 0);
             });
 
             Plotly.newPlot('reaction-plot', [{
@@ -904,20 +1565,49 @@
                     [0.5, '#cf6679'],
                     [1, '#ffb74d']
                 ],
-                showscale: false,
+                showscale: true,
+                colorbar: { title: 'Reactions', len: 0.5 },
                 hovertemplate: '<b>%{y}</b> reacted to <b>%{x}</b><br>%{z} times<extra></extra>'
-            }], chartLayout, { responsive: true });
+            }], {
+                ...chartLayout,
+                xaxis: {
+                    title: 'Reacted to Messages By →',
+                    side: 'top',
+                    tickangle: -30,
+                    tickfont: { size: 10 },
+                    automargin: true
+                },
+                yaxis: {
+                    title: '← Who Reacted',
+                    autorange: 'reversed',
+                    tickfont: { size: 10 }
+                },
+                margin: { t: 80 }
+            }, { responsive: true });
         }
 
         function renderVerbosity() {
-            const data = RAW_DATA.avg_length || [];
-            if (data.length === 0) {
-                document.getElementById('verbosity-plot').innerHTML = '<p style="text-align:center;color:#666;padding:40px;">No verbosity data available</p>';
+            // Compute verbosity from filtered data so it updates with conversation filter
+            if (filteredActivity.length === 0) {
+                showNoData('verbosity-plot', 'No data for this selection');
                 return;
             }
 
-            const x = data.map(d => d.sender);
-            const y = data.map(d => d.word_count);
+            clearNoData('verbosity-plot');
+
+            // Group by sender and sum counts (word_count would need to be in filteredActivity)
+            // For now, just show who sent most messages in current filter
+            const senderCounts = {};
+            filteredActivity.forEach(row => {
+                senderCounts[row.sender] = (senderCounts[row.sender] || 0) + row.count;
+            });
+
+            const sortedSenders = Object.entries(senderCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);  // Top 10
+
+            const x = sortedSenders.map(d => d[0]);
+            const y = sortedSenders.map(d => d[1]);
 
             Plotly.newPlot('verbosity-plot', [{
                 x, y, type: 'bar',
@@ -925,10 +1615,16 @@
                     color: CHART_COLORS.slice(0, x.length),
                     line: { width: 0 }
                 },
-                hovertemplate: '<b>%{x}</b><br>%{y:.1f} words/message<extra></extra>'
+                hovertemplate: '<b>%{x}</b><br>%{y} messages<extra></extra>'
             }], {
                 ...chartLayout,
-                yaxis: { title: 'Avg Words per Message' }
+                xaxis: {
+                    tickangle: -45,
+                    tickfont: { size: 11 },
+                    automargin: true
+                },
+                yaxis: { title: 'Messages Sent' },
+                margin: { b: 100 }
             }, { responsive: true });
         }
 
