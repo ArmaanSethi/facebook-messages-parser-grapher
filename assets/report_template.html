@@ -801,6 +801,34 @@
         let filteredActivity = [];
         let currentConv = '__overview__';  // Current conversation filter
 
+        // Calculate longest streak of consecutive days with messages
+        function calculateStreak(data) {
+            const dates = [...new Set(data.map(d => d.date))].sort();
+            if (dates.length === 0) return 0;
+
+            let maxStreak = 0;
+            let currentStreak = 0;
+            let lastDate = null;
+
+            dates.forEach(dateStr => {
+                const currentDate = new Date(dateStr);
+                if (!lastDate) {
+                    currentStreak = 1;
+                } else {
+                    const diffTime = Math.abs(currentDate - lastDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    if (diffDays === 1) {
+                        currentStreak++;
+                    } else {
+                        currentStreak = 1;
+                    }
+                }
+                if (currentStreak > maxStreak) maxStreak = currentStreak;
+                lastDate = currentDate;
+            });
+            return maxStreak;
+        }
+
         function isOverviewMode() {
             return currentConv === '__overview__';
         }
