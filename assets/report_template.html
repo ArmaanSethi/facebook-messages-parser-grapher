@@ -665,19 +665,22 @@
             </div>
         </div>
 
-        <!-- Heatmap + Streak Grid -->
+        <!-- Heatmap (half-width in chat mode) -->
         <div class="chart-grid">
             <div class="card" id="heatmap-card">
                 <h2>Activity Heatmap</h2>
                 <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Message density by day and time</p>
                 <div id="heatmap-plot" class="plotly-graph-div"></div>
             </div>
-            <div class="card" id="streak-card">
-                <h2>⚡️ Conversation Streaks</h2>
-                <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Daily activity calendar</p>
-                <div id="streak-stat" style="font-size: 2rem; font-weight: bold; color: #FFD740; margin-bottom: 15px;">0
-                    Days</div>
-                <div id="streak-calendar" style="overflow-x: auto; padding-bottom: 10px;"></div>
+        </div>
+
+        <!-- Streak Calendar (always full-width) -->
+        <div class="card" id="streak-card" style="margin-bottom: 40px;">
+            <h2>⚡️ Conversation Streaks</h2>
+            <p style="color: #888; font-size: 0.85rem; margin-bottom: 10px;">Daily activity calendar</p>
+            <div id="streak-stat" style="font-size: 2rem; font-weight: bold; color: #FFD740; margin-bottom: 15px;">0
+                Days</div>
+            <div id="streak-calendar" style="overflow-x: auto; padding-bottom: 10px;">
             </div>
         </div>
 
